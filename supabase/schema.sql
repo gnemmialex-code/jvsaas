@@ -62,13 +62,18 @@ CREATE INDEX IF NOT EXISTS credit_transactions_user_id_idx ON public.credit_tran
 -- RLS POLICIES
 -- ============================================================
 
+-- NB : Postgres n'a pas de CREATE POLICY IF NOT EXISTS — on DROP avant de
+-- recréer pour que le script soit réexécutable sans erreur (idempotent).
+
 -- users: users can only see/update their own record
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own profile" ON public.users;
 CREATE POLICY "Users can view own profile"
   ON public.users FOR SELECT
   USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON public.users;
 CREATE POLICY "Users can update own profile"
   ON public.users FOR UPDATE
   USING (auth.uid() = id);
@@ -76,14 +81,17 @@ CREATE POLICY "Users can update own profile"
 -- generations: users can only see/delete their own
 ALTER TABLE public.generations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own generations" ON public.generations;
 CREATE POLICY "Users can view own generations"
   ON public.generations FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own generations" ON public.generations;
 CREATE POLICY "Users can insert own generations"
   ON public.generations FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own generations" ON public.generations;
 CREATE POLICY "Users can delete own generations"
   ON public.generations FOR DELETE
   USING (auth.uid() = user_id);
@@ -91,6 +99,7 @@ CREATE POLICY "Users can delete own generations"
 -- credit_transactions: read-only for users
 ALTER TABLE public.credit_transactions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own transactions" ON public.credit_transactions;
 CREATE POLICY "Users can view own transactions"
   ON public.credit_transactions FOR SELECT
   USING (auth.uid() = user_id);
@@ -215,6 +224,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_users_updated_at ON public.users;
 CREATE TRIGGER update_users_updated_at
   BEFORE UPDATE ON public.users
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
@@ -238,6 +248,7 @@ CREATE INDEX IF NOT EXISTS contact_messages_created_at_idx ON public.contact_mes
 -- Admins read-all via service role; no RLS needed for anonymous inserts
 ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Anyone can insert contact messages" ON public.contact_messages;
 CREATE POLICY "Anyone can insert contact messages"
   ON public.contact_messages FOR INSERT
   WITH CHECK (true);
@@ -262,6 +273,7 @@ CREATE INDEX IF NOT EXISTS celebrities_active_idx ON public.celebrities(active);
 
 -- Read-only for public (search endpoint)
 ALTER TABLE public.celebrities ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone can read celebrities" ON public.celebrities;
 CREATE POLICY "Anyone can read celebrities"
   ON public.celebrities FOR SELECT
   USING (active = TRUE);

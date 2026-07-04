@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Sparkles, Mail, Lock, Eye, EyeOff, Zap, Gift } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, Zap, Gift } from "lucide-react";
 import toast from "react-hot-toast";
 import Input from "../components/Input";
 import { supabase } from "@/lib/supabase";
@@ -124,12 +124,10 @@ export default function RegisterPage() {
         className="w-full max-w-md relative z-10"
       >
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-gradient-violet-neon rounded-xl flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <span className="font-black text-xl">
-              Astra<span className="gradient-text">Verse</span>
+          <Link href="/" className="inline-block mb-6 select-none">
+            {/* Même logo que la page d'accueil (Navbar) */}
+            <span className="text-4xl sm:text-5xl italic font-black tracking-wide gradient-text-orange-subtle">
+              HL
             </span>
           </Link>
           <h1 className="text-3xl font-bold mb-2">Créer un compte</h1>

@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import {
   Sparkles, Download, Trash2, Zap, LogOut,
   Film, Crown, Settings, History,
-  Check, CheckCircle, Star, Replace, PlusCircle, AlertCircle, StopCircle, Lock,
+  Check, CheckCircle, Star, Replace, PlusCircle, AlertCircle, StopCircle, Lock, Eye, EyeOff,
   Gift, Copy, LogIn, UserPlus, Users, Loader2, ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -374,6 +374,10 @@ function DashboardContent() {
   const [displayName,      setDisplayName]      = useState("");
   const [editingName,      setEditingName]      = useState(false);
   const [savingName,       setSavingName]       = useState(false);
+  const [newPassword,        setNewPassword]        = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [showNewPassword,    setShowNewPassword]    = useState(false);
+  const [savingPassword,     setSavingPassword]     = useState(false);
   const [subInfo,          setSubInfo]          = useState<SubscriptionInfo | null>(null);
   const [adminScript,      setAdminScript]      = useState<AdminScript | null>(null);
   const [togglingScript,   setTogglingScript]   = useState(false);
@@ -548,6 +552,31 @@ function DashboardContent() {
   };
 
   const handleLogout = async () => { await supabase.auth.signOut(); router.push("/"); };
+
+  /* Change le mot de passe du compte — la session active suffit : ni ancien
+     mot de passe ni e-mail demandés, juste une double saisie identique. */
+  const handleChangePassword = async () => {
+    if (newPassword.length < 8) { toast.error("8 caractères minimum"); return; }
+    if (newPassword !== confirmNewPassword) { toast.error("Les mots de passe ne correspondent pas"); return; }
+    setSavingPassword(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        toast.error(
+          error.message.toLowerCase().includes("different")
+            ? "Le nouveau mot de passe doit être différent de l'ancien"
+            : "Impossible de modifier le mot de passe"
+        );
+      } else {
+        toast.success("Mot de passe modifié !");
+        setNewPassword("");
+        setConfirmNewPassword("");
+        setShowNewPassword(false);
+      }
+    } finally {
+      setSavingPassword(false);
+    }
+  };
 
   /* Enregistre le nom d'affichage dans les métadonnées du compte */
   const handleSaveName = async () => {
@@ -1685,6 +1714,59 @@ function DashboardContent() {
                           {stats?.member_since ? new Date(stats.member_since).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}) : "—"}
                         </span>
                       </div>
+                    </div>
+
+                    {/* ── Mot de passe ── */}
+                    <div className="card space-y-3">
+                      <h2 className="font-bold flex items-center gap-2">
+                        <Lock className="w-4 h-4 text-white/40" />
+                        Mot de passe
+                      </h2>
+                      <p className="text-white/40 text-xs leading-relaxed">
+                        Choisissez un nouveau mot de passe (8 caractères minimum). Aucune
+                        vérification de l&apos;ancien mot de passe ni de l&apos;e-mail n&apos;est demandée.
+                      </p>
+                      <div className="relative">
+                        <input
+                          type={showNewPassword ? "text" : "password"}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Nouveau mot de passe"
+                          autoComplete="new-password"
+                          className="w-full bg-surface border border-surface-border rounded-xl px-3 py-2.5 pr-10 text-sm text-white placeholder-white/25 focus:outline-none focus:border-accent-orange/60"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          aria-label={showNewPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
+                        >
+                          {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                      <input
+                        type={showNewPassword ? "text" : "password"}
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        placeholder="Confirmer le nouveau mot de passe"
+                        autoComplete="new-password"
+                        className="w-full bg-surface border border-surface-border rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-accent-orange/60"
+                      />
+                      {confirmNewPassword.length > 0 && newPassword !== confirmNewPassword && (
+                        <p className="text-red-400 text-xs">Les mots de passe ne correspondent pas</p>
+                      )}
+                      <button
+                        onClick={handleChangePassword}
+                        disabled={
+                          savingPassword ||
+                          newPassword.length < 8 ||
+                          newPassword !== confirmNewPassword
+                        }
+                        className="btn-primary-orange w-full py-2.5 text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      >
+                        <Lock className="w-4 h-4" />
+                        {savingPassword ? "Modification…" : "Changer le mot de passe"}
+                      </button>
                     </div>
 
                     {/* ── Abonnement ── */}

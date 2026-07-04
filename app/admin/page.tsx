@@ -51,16 +51,19 @@ export default function AdminPage() {
 
   useEffect(() => { fetchUsers(); }, []);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (): Promise<User[]> => {
     setLoading(true);
+    let list: User[] = [];
     const res = await fetch("/api/admin/users");
     if (res.ok) {
-      setUsers(await res.json());
+      list = await res.json();
+      setUsers(list);
     } else {
       const err = await res.json().catch(() => ({}));
       toast.error(`Erreur ${res.status} : ${err.error ?? "Accès refusé"}`);
     }
     setLoading(false);
+    return list;
   };
 
   const callAction = async (userId: string, action: string, value: unknown) => {
@@ -73,13 +76,15 @@ export default function AdminPage() {
     setSaving(false);
     if (res.ok) {
       toast.success("Sauvegardé !");
-      await fetchUsers();
-      if (selectedUser) {
-        const updated = users.find(u => u.id === userId);
-        if (updated) setSelectedUser(updated);
+      const fresh = await fetchUsers();
+      const updated = fresh.find(u => u.id === userId);
+      if (updated) {
+        setSelectedUser(prev => (prev && prev.id === userId ? updated : prev));
+        setEditCredits(String(updated.credits));
       }
     } else {
-      toast.error("Erreur lors de la sauvegarde");
+      const err = await res.json().catch(() => ({}));
+      toast.error(err.error ?? "Erreur lors de la sauvegarde");
     }
   };
 

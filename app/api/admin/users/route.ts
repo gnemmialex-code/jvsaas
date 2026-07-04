@@ -23,7 +23,20 @@ export async function GET(req: NextRequest) {
     .order("created_at", { ascending: false });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json(data);
+
+  // La colonne de vérité est plan_id ('free' | 'plan_essentiel' | 'plan_pro' |
+  // 'plan_ultra') — on en dérive le champ "plan" affiché par le back-office.
+  const planFromId: Record<string, string> = {
+    free:           "free",
+    plan_essentiel: "essentiel",
+    plan_pro:       "pro",
+    plan_ultra:     "ultra",
+  };
+  const rows = (data ?? []).map((u: Record<string, unknown>) => ({
+    ...u,
+    plan: (u.plan as string | null) ?? planFromId[(u.plan_id as string) ?? "free"] ?? "free",
+  }));
+  return NextResponse.json(rows);
 }
 
 // POST — modifier un utilisateur (crédits, plan, notes, ban)
@@ -58,14 +71,18 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === "set_credits") {
-    await supabase.from("users").update({ credits: Number(value) }).eq("id", userId);
+    const { error } = await supabase.from("users").update({ credits: Number(value) }).eq("id", userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   } else if (action === "add_credits") {
     const { data } = await supabase.from("users").select("credits").eq("id", userId).single();
     const newCredits = (data?.credits ?? 0) + Number(value);
-    await supabase.from("users").update({ credits: newCredits }).eq("id", userId);
+    const { error } = await supabase.from("users").update({ credits: newCredits }).eq("id", userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   } else if (action === "set_plan") {
+    // plan_id est LA colonne lue par toute l'app (génération, crédits, Snap
+    // Rouge, floutage) — c'est elle qu'il faut poser, y compris pour 'free'.
     const planIdMap: Record<string, string> = {
-      free:      "plan_essentiel",
+      free:      "free",
       essentiel: "plan_essentiel",
       pro:       "plan_pro",
       ultra:     "plan_ultra",
@@ -77,16 +94,27 @@ export async function POST(req: NextRequest) {
       ultra:     999999,
     };
     const planKey = String(value);
-    await supabase.from("users").update({
-      plan:            planKey,
-      plan_id:         planIdMap[planKey] ?? "plan_essentiel",
-      credits:         planCreditsMap[planKey] ?? 100,
-      plan_started_at: new Date().toISOString(),
+    if (!(planKey in planIdMap)) {
+      return NextResponse.json({ error: `Plan inconnu : ${planKey}` }, { status: 400 });
+    }
+    const { error } = await supabase.from("users").update({
+      plan_id:    planIdMap[planKey],
+      credits:    planCreditsMap[planKey],
+      updated_at: new Date().toISOString(),
     }).eq("id", userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    // Colonnes optionnelles (absentes du schéma de base) — best-effort séparé
+    // pour ne jamais faire échouer le changement de plan lui-même.
+    await supabase.from("users")
+      .update({ plan: planKey, plan_started_at: new Date().toISOString() })
+      .eq("id", userId)
+      .then(() => {}, () => {});
   } else if (action === "set_notes") {
-    await supabase.from("users").update({ notes: String(value) }).eq("id", userId);
+    const { error } = await supabase.from("users").update({ notes: String(value) }).eq("id", userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   } else if (action === "toggle_ban") {
-    await supabase.from("users").update({ is_banned: Boolean(value) }).eq("id", userId);
+    const { error } = await supabase.from("users").update({ is_banned: Boolean(value) }).eq("id", userId);
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   return NextResponse.json({ success: true });
