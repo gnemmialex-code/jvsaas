@@ -37,6 +37,11 @@ CREATE TABLE IF NOT EXISTS public.generations (
   input_image_url TEXT NOT NULL,
   output_image_url TEXT NOT NULL,
   style TEXT NOT NULL,
+  -- Suivi du pipeline asynchrone (/api/generate + /api/generate/poll)
+  status TEXT NOT NULL DEFAULT 'done',
+  prediction_id TEXT,
+  step INTEGER,
+  job_config JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -90,6 +95,11 @@ DROP POLICY IF EXISTS "Users can insert own generations" ON public.generations;
 CREATE POLICY "Users can insert own generations"
   ON public.generations FOR INSERT
   WITH CHECK (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own generations" ON public.generations;
+CREATE POLICY "Users can update own generations"
+  ON public.generations FOR UPDATE
+  USING (auth.uid() = user_id);
 
 DROP POLICY IF EXISTS "Users can delete own generations" ON public.generations;
 CREATE POLICY "Users can delete own generations"
