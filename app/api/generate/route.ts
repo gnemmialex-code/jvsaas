@@ -67,17 +67,20 @@ async function getUserPlanId(userId: string): Promise<string> {
 }
 
 async function uploadFile(
-  supabase: Awaited<ReturnType<typeof createSupabaseServer>>,
   file: File,
   userId: string,
 ): Promise<{ url: string; b64: string }> {
+  // Upload avec le client service role : le bucket n'a pas de policy RLS
+  // d'insertion, et le client session (clé anon) se fait rejeter
+  // ("new row violates row-level security policy").
+  const admin = createSupabaseAdmin();
   const validation = validateImageFile(file, MAX_FILE_SIZE);
   if (!validation.valid) throw new Error(validation.error);
 
   const buffer = Buffer.from(await file.arrayBuffer());
   const ext    = file.name.split(".").pop() ?? "jpg";
   const path   = `inputs/${userId}/${generateId()}.${ext}`;
-  const url    = await uploadToStorage(supabase, buffer, path, file.type);
+  const url    = await uploadToStorage(admin, buffer, path, file.type);
   const b64    = `data:${file.type};base64,${buffer.toString("base64")}`;
   return { url, b64 };
 }
@@ -157,8 +160,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Images source et cible requises" }, { status: 400 });
       }
       const [src, tgt] = await Promise.all([
-        uploadFile(supabase, sourceFile, effectiveUserId),
-        uploadFile(supabase, targetFile, effectiveUserId),
+        uploadFile(sourceFile, effectiveUserId),
+        uploadFile(targetFile, effectiveUserId),
       ]);
       inputImageForRecord = src.url;
       styleLabel          = "SwapFace";
@@ -184,7 +187,7 @@ export async function POST(req: NextRequest) {
       const stylePrompt = rawStylePrompt
         || "photorealistic portrait, ultra HD, professional photography, perfect lighting";
 
-      const { url: inputImageUrl, b64: sourceB64 } = await uploadFile(supabase, imageFile, effectiveUserId);
+      const { url: inputImageUrl, b64: sourceB64 } = await uploadFile(imageFile, effectiveUserId);
       inputImageForRecord = inputImageUrl;
 
       // Detect celebrities in the prompt and load their reference images from Storage
