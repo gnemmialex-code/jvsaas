@@ -58,6 +58,34 @@ const GTA_STYLE_MODEL =
 // jour avec le trigger_word de cet entraînement.
 const LORA_TRIGGER = process.env.REPLICATE_LORA_TRIGGER || "GTA 5 style model generation";
 
+// ─── RÉGLAGES DE GÉNÉRATION SURCHARGEABLES ───────────────────────────────────
+// Reporte ici (via .env.local / variables Vercel) les valeurs testées sur le
+// playground replicate.com. Non défini → valeurs par défaut du code.
+//   REPLICATE_PROMPT_STRENGTH      (0–1)   force img2img — remplace le calcul
+//                                          par intensité pour TOUTES les générations
+//   REPLICATE_NUM_INFERENCE_STEPS  (1–50)  étapes de diffusion (défaut 40)
+//   REPLICATE_GUIDANCE_SCALE       (0–10)  adhérence au prompt (défaut 3.5)
+//   REPLICATE_OUTPUT_QUALITY       (0–100) qualité jpg/webp (défaut 95)
+//   REPLICATE_LORA_SCALE           (0–2)   force du LoRA (défaut 1.1)
+function envNum(name: string): number | undefined {
+  const raw = process.env[name];
+  if (!raw) return undefined;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) {
+    console.warn(`[Pipeline] ${name}="${raw}" n'est pas un nombre — valeur ignorée`);
+    return undefined;
+  }
+  return n;
+}
+
+const TUNING = {
+  promptStrength: envNum("REPLICATE_PROMPT_STRENGTH"),
+  steps:          envNum("REPLICATE_NUM_INFERENCE_STEPS"),
+  guidance:       envNum("REPLICATE_GUIDANCE_SCALE"),
+  outputQuality:  envNum("REPLICATE_OUTPUT_QUALITY"),
+  loraScale:      envNum("REPLICATE_LORA_SCALE"),
+};
+
 const GTA_STYLE_SPEC: Img2ImgModelSpec = {
   spec: GTA_STYLE_MODEL,
   // Le modèle Flux LoRA n'a pas d'entrée "negative_prompt" : la liste des
@@ -70,16 +98,18 @@ const GTA_STYLE_SPEC: Img2ImgModelSpec = {
       ? ` ═══ NEGATIVE PROMPT — NEVER GENERATE ANY OF THE FOLLOWING, ZERO TOLERANCE: ${negPrompt}.`
       : ""),
     image:               imageUrl,
-    prompt_strength:     strength,
+    // Surcharge globale (valeurs testées sur le playground Replicate) sinon
+    // force calculée selon l'intensité choisie par l'utilisateur.
+    prompt_strength:     TUNING.promptStrength ?? strength,
     // Le modèle accepte webp/jpg/png — on garde jpg par défaut, png pour Ultra.
     output_format:       outputFormat === "png" ? "png" : "jpg",
-    output_quality:      95,
+    output_quality:      TUNING.outputQuality ?? 95,
     // 40 étapes (au lieu de 28 par défaut) : rendu nettement plus détaillé.
-    num_inference_steps: 40,
+    num_inference_steps: TUNING.steps ?? 40,
     // Force du LoRA légèrement au-dessus de 1 : style GTA plus affirmé.
-    lora_scale:          1.1,
+    lora_scale:          TUNING.loraScale ?? 1.1,
     // Adhérence au prompt renforcée (défaut 3).
-    guidance_scale:      3.5,
+    guidance_scale:      TUNING.guidance ?? 3.5,
     go_fast:             false,
   }),
 };
