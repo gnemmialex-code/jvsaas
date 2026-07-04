@@ -10,6 +10,17 @@ import Input from "../components/Input";
 import { supabase } from "@/lib/supabase";
 import { LOCALES, useI18n } from "@/lib/i18n";
 
+function GoogleIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
+      <path d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+      <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
+      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.96L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+    </svg>
+  );
+}
+
 function LanguageMenu() {
   const { locale, setLocale } = useI18n();
   const [open, setOpen] = useState(false);
@@ -58,6 +69,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState<"google" | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Listen for SIGNED_IN event — fires after session cookie is fully set
@@ -101,6 +113,26 @@ export default function LoginPage() {
     }
   };
 
+  const handleOAuth = async (provider: "google") => {
+    setOauthLoading(provider);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          // URL sans query string : plus fiable pour le matching des
+          // "Redirect URLs" Supabase. Le callback redirige vers /dashboard
+          // par défaut.
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      if (error) throw error;
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : t("login.errorGeneric");
+      toast.error(msg);
+      setOauthLoading(null);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
       <div className="absolute top-1/4 left-1/3 w-64 h-64 bg-accent-violet/15 rounded-full blur-3xl" />
@@ -121,6 +153,27 @@ export default function LoginPage() {
           transition={{ duration: 0.3 }}
           className="card !bg-black/90 !backdrop-blur-lg transition-shadow duration-300 hover:shadow-orange-lg"
         >
+          <div className="flex flex-col gap-3 mb-6">
+            <button
+              type="button"
+              onClick={() => handleOAuth("google")}
+              disabled={!!oauthLoading}
+              className="w-full flex items-center justify-center gap-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-sm font-medium text-white disabled:opacity-50"
+            >
+              <GoogleIcon />
+              {oauthLoading === "google" ? "Redirection..." : "Continuer avec Google"}
+            </button>
+          </div>
+
+          <div className="relative mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10" />
+            </div>
+            <div className="relative flex justify-center">
+              <span className="bg-black px-3 text-white/30 text-sm">ou</span>
+            </div>
+          </div>
+
           <form onSubmit={handleLogin} className="space-y-4">
             <Input
               label={t("login.email")}

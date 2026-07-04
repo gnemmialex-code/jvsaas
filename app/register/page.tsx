@@ -99,6 +99,9 @@ export default function RegisterPage() {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
+          // URL sans query string : plus fiable pour le matching des
+          // "Redirect URLs" Supabase. Le callback redirige vers /dashboard
+          // par défaut.
           redirectTo: `${window.location.origin}/auth/callback`,
         },
       });
