@@ -4,8 +4,8 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
 export const metadata = {
-  title: "Politique de Confidentialité — Highlights",
-  description: "Politique de confidentialité et protection des données personnelles — Highlights.",
+  title: "Politique de Confidentialité — High Like It",
+  description: "Politique de confidentialité et protection des données personnelles — High Like It.",
 };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -51,10 +51,10 @@ export default function PrivacyPage() {
 
         <Section title="1. Responsable du traitement">
           <p>
-            Le responsable du traitement des données personnelles collectées via le site Highlights est :
+            Le responsable du traitement des données personnelles collectées via le site High Like It est :
           </p>
           <div className="bg-surface border border-surface-border rounded-xl p-4 mt-2 space-y-1">
-            <p><span className="text-white font-medium">Dénomination sociale :</span> SAS Progressio (marque Highlights / Rise and Close)</p>
+            <p><span className="text-white font-medium">Dénomination sociale :</span> SAS Progressio (marque High Like It / Rise and Close)</p>
             <p><span className="text-white font-medium">Forme juridique :</span> Société par actions simplifiée (SAS)</p>
             <p><span className="text-white font-medium">Siège social :</span> 4 rue du 8 mai 1945, 91470 Limours, France</p>
             <p><span className="text-white font-medium">SIREN :</span> 100 853 746 — <span className="text-white font-medium">TVA :</span> FR12 100853746</p>

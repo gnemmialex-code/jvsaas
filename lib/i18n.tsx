@@ -30,7 +30,7 @@ const translations: Record<Locale, Dict> = {
 
     "hero.title.line1": "La plateforme n°1 de transformation photo",
     "hero.title.line1Accent": "IA",
-    "hero.title.brand": "Highlights",
+    "hero.title.brand": "High Like It",
     "hero.subtitle": "Deviens le héros de ton propre jeu vidéo.",
     "hero.cta": "Commencer Maintenant",
     "hero.liveCounter": "personnes ont généré une image aujourd'hui avec",
@@ -80,7 +80,7 @@ const translations: Record<Locale, Dict> = {
     "nav.cta": "Get Started Now",
 
     "hero.title.line1": "Make your dreams possible with",
-    "hero.title.brand": "Highlights",
+    "hero.title.brand": "High Like It",
     "hero.subtitle": "Generate your photo and finally become the hero of your own Grand Theft Auto V story — Grand Theft Auto VI coming soon.",
     "hero.cta": "Get Started Now",
     "hero.liveCounter": "people generated an image today with",
@@ -130,7 +130,7 @@ const translations: Record<Locale, Dict> = {
     "nav.cta": "Empezar Ahora",
 
     "hero.title.line1": "Haz tus sueños posibles con",
-    "hero.title.brand": "Highlights",
+    "hero.title.brand": "High Like It",
     "hero.subtitle": "Genera tu foto y conviértete por fin en protagonista de tu propia historia de Grand Theft Auto V, y pronto de Grand Theft Auto VI.",
     "hero.cta": "Empezar Ahora",
     "hero.liveCounter": "personas generaron una imagen hoy con",
@@ -180,7 +180,7 @@ const translations: Record<Locale, Dict> = {
     "nav.cta": "Jetzt Starten",
 
     "hero.title.line1": "Verwirkliche deine Träume mit",
-    "hero.title.brand": "Highlights",
+    "hero.title.brand": "High Like It",
     "hero.subtitle": "Erstelle dein Foto und werde endlich zum Helden deiner eigenen Grand Theft Auto V Geschichte — Grand Theft Auto VI demnächst verfügbar.",
     "hero.cta": "Jetzt Starten",
     "hero.liveCounter": "Personen haben heute ein Bild generiert mit",

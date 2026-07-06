@@ -21,8 +21,21 @@ if (!isSupabaseConfigured && typeof window !== "undefined") {
   );
 }
 
-// Client-side Supabase client (use in "use client" components)
-export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
+// Client-side Supabase client (use in "use client" components).
+// La session est stockée dans un cookie longue durée (400 jours, le maximum
+// accepté par Chrome) et le jeton est rafraîchi automatiquement : l'utilisateur
+// reste connecté même après avoir quitté la page ou fermé le navigateur.
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey, {
+  cookieOptions: {
+    maxAge: 60 * 60 * 24 * 400,
+    sameSite: "lax",
+    secure: typeof window !== "undefined" && window.location.protocol === "https:",
+  },
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+});
 
 // Admin client with service role (server-only, never expose to browser)
 export function createSupabaseAdmin() {

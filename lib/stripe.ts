@@ -31,18 +31,18 @@ export const STRIPE_PLANS: Record<string, { credits: number | null; monthly: str
     credits: 2500,
     monthly: process.env.STRIPE_PRICE_ESSENTIEL_MONTHLY!,
     yearly:  process.env.STRIPE_PRICE_ESSENTIEL_YEARLY!,
-    name: "Highlights Essentiel",
+    name: "High Like It Essentiel",
   },
   plan_pro: {
     credits: 11250, // 10 250 mensuel + 1 000 crédits offerts à la souscription
     monthly: process.env.STRIPE_PRICE_PRO_MONTHLY!,
     yearly:  process.env.STRIPE_PRICE_PRO_YEARLY!,
-    name: "Highlights Pro",
+    name: "High Like It Pro",
   },
   plan_ultra: {
     credits: null,
     monthly: process.env.STRIPE_PRICE_ULTRA_MONTHLY!,
     yearly:  process.env.STRIPE_PRICE_ULTRA_YEARLY!,
-    name: "Highlights Ultra",
+    name: "High Like It Ultra",
   },
 };

@@ -4,7 +4,7 @@ import React, { Suspense, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import {
   Sparkles, Download, Trash2, Zap, LogOut,
@@ -21,6 +21,7 @@ import VideoUploadBox from "../components/VideoUploadBox";
 import { STYLES, Style } from "../components/StyleSelector";
 import PaywallModal from "../components/PaywallModal";
 import TrustNotification from "../components/TrustNotification";
+import CommunityView from "../components/CommunityView";
 
 /* ─── Refinement options ─────────────────────────────────── */
 interface OptionItem { id: string; label: string; prompt: string; }
@@ -141,6 +142,7 @@ const PLAN_PERKS: Record<"essentiel" | "pro" | "elite", { label: string; on: boo
     { label: "Qualité HD 1080p",                          on: true  },
     { label: "1 image à la fois",                         on: true  },
     { label: "Sans filigrane",                            on: false },
+    { label: "GTA 5 Intégral (toute l'image)",            on: false },
     { label: "Génération vidéo IA (GTA VI)",              on: false },
     { label: "Jusqu'à 4 images d'un coup",                on: false },
     { label: "Description libre du rendu",                on: false },
@@ -148,8 +150,8 @@ const PLAN_PERKS: Record<"essentiel" | "pro" | "elite", { label: string; on: boo
   ],
   pro: [
     { label: "Qualité 4K ultra-nette",                    on: true  },
-    { label: "Styles célébrités exclusifs",               on: true  },
     { label: "Sans filigrane",                            on: true  },
+    { label: "GTA 5 Intégral — 3 générations/mois",       on: true  },
     { label: "Génération vidéo IA (GTA VI)",              on: true  },
     { label: "Jusqu'à 4 images d'un coup",                on: true  },
     { label: "Description libre du rendu",                on: false },
@@ -159,6 +161,7 @@ const PLAN_PERKS: Record<"essentiel" | "pro" | "elite", { label: string; on: boo
   elite: [
     { label: "Qualité Ultra 8K photoréaliste",            on: true  },
     { label: "Générations illimitées",                    on: true  },
+    { label: "GTA 5 Intégral — 35 générations/mois",      on: true  },
     { label: "Description libre du rendu",                on: true  },
     { label: "Sans filigrane",                            on: true  },
     { label: "Vidéo IA + upscale 8K illimités",           on: true  },
@@ -189,7 +192,7 @@ function buildEnrichedPrompt(
 }
 
 /* ─── Types ─────────────────────────────────────────────── */
-type NavView = "create" | "history" | "referral" | "subscription" | "settings";
+type NavView = "create" | "history" | "referral" | "community" | "subscription" | "settings";
 type GenType = "create" | "video";
 type ObjectOption = "addObject" | "fullGeneration" | "replaceObject";
 
@@ -240,62 +243,90 @@ const NAV_ITEMS = [
   { id: "create"       as NavView, label: "Créer",        icon: Sparkles, desc: "Nouvelle génération"   },
   { id: "history"      as NavView, label: "Historique",   icon: History,  desc: "Mes images"            },
   { id: "referral"     as NavView, label: "Parrainage",   icon: Gift,     desc: "Gagne facilement"       },
+  { id: "community"    as NavView, label: "Communauté",   icon: Users,    desc: "Réservé Ultimate"       },
   { id: "subscription" as NavView, label: "Abonnement",   icon: Crown,    desc: "Offre spéciale !"       },
   { id: "settings"     as NavView, label: "Paramètres",   icon: Settings, desc: "Mon compte"            },
 ];
+
+/* Chaque section du Dashboard possède sa propre URL : naviguer entre les
+   onglets met à jour l'adresse (sans recharger la page), et charger
+   directement /historique, /parrainage, /abonnement ou /profil ouvre la
+   bonne section. */
+const VIEW_PATHS: Record<NavView, string> = {
+  create:       "/dashboard",
+  history:      "/historique",
+  referral:     "/parrainage",
+  community:    "/communaute",
+  subscription: "/abonnement",
+  settings:     "/profil",
+};
+const PATH_VIEWS: Record<string, NavView> = {
+  "/dashboard":  "create",
+  "/historique": "history",
+  "/parrainage": "referral",
+  "/communaute": "community",
+  "/abonnement": "subscription",
+  "/profil":     "settings",
+};
 
 const GEN_TABS: { id: GenType; label: string; icon: React.ElementType }[] = [
   { id: "create",   label: "Grand Theft Auto V",  icon: Sparkles },
   { id: "video",    label: "Grand Theft Auto VI", icon: Film     },
 ];
 
-const PLANS_DATA = [
+/* Une ligne "Inclus dans le plan" ; hl = mise en avant (couleur plus claire) :
+   ce sont les meilleures différences de chaque formule par rapport aux autres. */
+interface PlanFeature { text: string; hl?: boolean }
+
+const PLANS_DATA: {
+  id: string; name: string; icon: React.ElementType; priceMonthly: number;
+  originalPrice: string; yearlyTotal: number; credits: string; creditsDesc: string;
+  bonus?: string; badge: null | "Best Value" | "Exclusif"; tagline: string;
+  features: PlanFeature[];
+}[] = [
   {
     id: "essentiel", name: "Découverte", icon: Zap, priceMonthly: 4.90, originalPrice: "11,90", yearlyTotal: 49,
-    credits: "2 500", creditsDesc: "Parfait pour explorer et tester vos idées",
-    badge: null as null | "Best Value" | "Exclusif",
-    tagline: "Pour essayer et s'amuser",
+    credits: "2 500", creditsDesc: "Soit environ 25 images par mois",
+    badge: null,
+    tagline: "Pour tester et s'amuser de temps en temps",
     features: [
-      "Qualité HD 1080p",
-      "1 génération à la fois",
-      "Générateur photo uniquement (pas de vidéo)",
-      "Léger filigrane sur les images",
-      "File d'attente standard",
-      "Historique limité à 20 images",
-      "Support standard sous 48-72h",
+      { text: "Le petit prix pour découvrir l'IA", hl: true },
+      { text: "Environ 25 images par mois" },
+      { text: "Photos uniquement — pas de vidéo" },
+      { text: "Qualité correcte pour partager entre amis" },
+      { text: "Petit logo discret sur vos images" },
+      { text: "Vos 20 dernières créations gardées en mémoire" },
     ],
   },
   {
     id: "pro", name: "Essentiel", icon: Star, priceMonthly: 9.90, originalPrice: "24,90", yearlyTotal: 99,
-    credits: "10 250", creditsDesc: "Le meilleur choix pour les passionnés", bonus: "+2 500 crédits offerts",
-    badge: "Best Value" as null | "Best Value" | "Exclusif",
-    tagline: "Tout se débloque : vidéo, 4K, zéro filigrane",
+    credits: "10 250", creditsDesc: "Soit environ 100 images par mois", bonus: "+2 500 crédits offerts",
+    badge: "Best Value",
+    tagline: "Le choix préféré : vidéos, images plus belles, zéro logo",
     features: [
-      "Qualité 4K ultra-nette (4× plus détaillée)",
-      "Sans filigrane — images 100 % propres",
-      "Génération vidéo IA débloquée (GTA VI)",
-      "Jusqu'à 4 images générées d'un coup",
-      "Styles célébrités exclusifs réservés aux abonnés",
-      "Accès en avant-première aux nouveaux styles",
-      "Historique 100 images",
-      "Support prioritaire sous 24h",
+      { text: "4× plus d'images que Découverte (~100/mois)", hl: true },
+      { text: "GTA 5 Intégral : toute l'image en style GTA 5 (3/mois)", hl: true },
+      { text: "Aucun logo — vos images sont 100 % à vous", hl: true },
+      { text: "Images beaucoup plus nettes et détaillées" },
+      { text: "Vos 100 dernières créations gardées en mémoire" },
     ],
   },
   {
     id: "elite", name: "Ultimate", icon: Crown, priceMonthly: 19.90, originalPrice: "49,90", yearlyTotal: 199,
-    credits: "Illimités", creditsDesc: "Pour les créateurs sans limites",
-    badge: "Exclusif" as null | "Best Value" | "Exclusif",
-    tagline: "L'expérience VIP totale, sans aucune limite",
+    credits: "Illimités", creditsDesc: "Créez autant que vous voulez, sans compter",
+    badge: "Exclusif",
+    tagline: "Zéro limite : tout est débloqué, tout est prioritaire",
     features: [
-      "Qualité Ultra 8K photoréaliste — le maximum",
-      "Générations 100 % illimitées",
-      "File prioritaire : vos rendus passent devant tout le monde",
-      "Vidéo IA + upscale 8K illimités",
-      "Tous les styles + exclusivités Ultimate",
-      "Accès anticipé aux nouveautés (GTA VI en avant-première)",
-      "Historique illimité",
-      "Manager dédié + support VIP 24/7",
-      "Accès API illimité",
+      { text: "Vidéo IA — accès complet", hl: true },
+      { text: "Accès anticipé à GTA 6", hl: true },
+      { text: "GTA 5 Intégral : toute l'image en style GTA 5 (35/mois)", hl: true },
+      { text: "Communauté privée incluse", hl: true },
+      { text: "Assistance dédiée 7j/7 — exclusif Ultimate", hl: true },
+      { text: "Images et vidéos illimitées — aucun quota" },
+      { text: "La plus belle qualité d'image possible" },
+      { text: "Vos créations passent devant tout le monde (2× plus rapide)" },
+      { text: "Décrivez librement votre image avec vos mots (exclusif Ultimate)" },
+      { text: "Toutes vos créations gardées à vie" },
     ],
   },
 ];
@@ -313,6 +344,7 @@ export default function DashboardPage() {
 function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const [navView, setNavView]   = useState<NavView>("create");
   const [genType, setGenType]   = useState<GenType>("create");
   const [planBilling, setPlanBilling] = useState<"monthly" | "yearly">("yearly");
@@ -341,6 +373,7 @@ function DashboardContent() {
   const [styleBg,       setStyleBg]       = useState<string | null>(null);
   const [accessory,     setAccessory]     = useState<string | null>(null);
   const [details,       setDetails]       = useState(""); // description libre — Ultimate uniquement
+  const [fullScene,     setFullScene]     = useState(false); // GTA 5 Intégral — Essentiel/Ultimate
 
 
   /* generation precision options */
@@ -388,8 +421,38 @@ function DashboardContent() {
   const cancelRef    = useRef(false);
   const activePredRef = useRef<{ jobId?: string; predId?: string }>({});
 
+  /* Change de section ET met à jour l'URL de la barre d'adresse, sans
+     recharger la page (ex. Historique → /historique). */
+  const changeView = (view: NavView) => {
+    setNavView(view);
+    if (typeof window !== "undefined" && window.location.pathname !== VIEW_PATHS[view]) {
+      window.history.pushState(null, "", VIEW_PATHS[view]);
+    }
+    if (typeof window !== "undefined") window.scrollTo({ top: 0 });
+  };
+
+  /* Garde la section affichée synchronisée avec l'URL : chargement direct de
+     /historique, /profil…, navigation Précédent/Suivant du navigateur, ou
+     clic sur un lien de la Navbar. */
   useEffect(() => {
-    // Vue initiale + retours de paiement via l'URL (?view=snaprouge, ?payment=snap_success)
+    const v = PATH_VIEWS[pathname ?? ""];
+    if (v) setNavView(v);
+  }, [pathname]);
+
+  useEffect(() => {
+    const onPop = () => {
+      const v = PATH_VIEWS[window.location.pathname];
+      if (v) setNavView(v);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  useEffect(() => {
+    // Vue initiale : d'abord l'URL propre (/historique, /profil…), puis les
+    // retours de paiement via l'URL (?view=..., ?payment=snap_success)
+    const pathView = PATH_VIEWS[window.location.pathname];
+    if (pathView) setNavView(pathView);
     const params = new URLSearchParams(window.location.search);
     const view = params.get("view");
     if (view && NAV_ITEMS.some(n => n.id === view)) setNavView(view as NavView);
@@ -707,8 +770,11 @@ function DashboardContent() {
       const effStyle = selectedStyle ?? STYLES.find(s => s.id === "gta5") ?? null;
       // Description libre : réservée à la formule Ultimate (double garde côté envoi).
       const extraDetails = userPlanTier(stats?.plan) === "elite" ? details.trim() : "";
-      // Le gel du fond est TOUJOURS appliqué (mode "Ne pas changer" par défaut).
-      const customPrompt = [KEEP_BACKGROUND_PROMPT, extraDetails].filter(Boolean).join(", ");
+      // GTA 5 Intégral : réservé Essentiel/Ultimate (le serveur re-vérifie + quota).
+      const wantsFullScene = fullScene && userPlanTier(stats?.plan) !== "essentiel";
+      // Le gel du fond est TOUJOURS appliqué (mode "Ne pas changer" par défaut) —
+      // SAUF en mode GTA 5 Intégral, où tout le décor est justement transformé.
+      const customPrompt = [wantsFullScene ? "" : KEEP_BACKGROUND_PROMPT, extraDetails].filter(Boolean).join(", ");
       const enriched = buildEnrichedPrompt(effStyle, clothing, mood, styleBg, accessory);
       formData.append("image", await resizeImageFile(styleFile));
       if (effStyle) {
@@ -718,6 +784,7 @@ function DashboardContent() {
       if (enriched)             formData.append("style_prompt",    enriched);
       if (customPrompt)         formData.append("custom_prompt",   customPrompt);
       if (renderStyle)          formData.append("render_style",    renderStyle);
+      if (wantsFullScene)       formData.append("full_scene",      "1");
       formData.append("intensity",       intensity);
       formData.append("output_format",   genFormat);
       formData.append("preserve_outfit", preserveOutfit ? "1" : "0");
@@ -827,7 +894,7 @@ function DashboardContent() {
   const goToSubscription = () => {
     setResultUrl(null);
     setResultStyle("");
-    setNavView("subscription");
+    changeView("subscription");
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -844,27 +911,33 @@ function DashboardContent() {
       <Navbar
         wide
         ctaLabel="Abonnement"
-        ctaHref="/dashboard?view=subscription"
-        onCtaClick={(e) => { e.preventDefault(); setNavView("subscription"); }}
+        ctaHref="/abonnement"
+        onCtaClick={(e) => { e.preventDefault(); changeView("subscription"); }}
         middleContent={
           <>
             <button
-              onClick={() => setNavView("create")}
+              onClick={() => changeView("create")}
               className="text-[12px] font-medium tracking-wide gradient-text-orange-subtle hover:opacity-80 hover:scale-110 transition-all duration-300 whitespace-nowrap shrink-0 inline-block"
             >
               Générer
             </button>
             <button
-              onClick={() => setNavView("history")}
+              onClick={() => changeView("history")}
               className="text-[13px] font-light tracking-wide text-white/75 hover:text-white hover:scale-110 transition-all duration-300 whitespace-nowrap shrink-0 inline-block"
             >
               Historique
             </button>
             <button
-              onClick={() => setNavView("referral")}
+              onClick={() => changeView("referral")}
               className="text-[13px] font-light tracking-wide text-white/75 hover:text-white hover:scale-110 transition-all duration-300 whitespace-nowrap shrink-0 inline-block"
             >
               Parrainage
+            </button>
+            <button
+              onClick={() => changeView("community")}
+              className="text-[13px] font-light tracking-wide text-white/75 hover:text-white hover:scale-110 transition-all duration-300 whitespace-nowrap shrink-0 inline-block"
+            >
+              Communauté
             </button>
           </>
         }
@@ -876,7 +949,7 @@ function DashboardContent() {
             global) avec un léger film + flou, sauf pour Abonnement /
             Parrainage / Historique qui restent en noir uni, sans le fond qui
             défile ni le flou. */}
-        {["subscription", "referral", "history"].includes(navView) ? (
+        {["subscription", "referral", "history", "settings", "community"].includes(navView) ? (
           <div className="absolute inset-0 bg-black pointer-events-none z-0" />
         ) : (
           <div className="absolute inset-0 backdrop-blur-[3px] bg-background/25 pointer-events-none z-0" />
@@ -1035,6 +1108,59 @@ function DashboardContent() {
                               </span>
                             </button>
                           )}
+                        </AnimatedCard>
+
+                        {/* ── GTA 5 Intégral — toute l'image transformée (Essentiel/Ultimate) ── */}
+                        <AnimatedCard delay={0.1} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-3">
+                          <label
+                            className="flex items-start gap-3 cursor-pointer group"
+                            onClick={(e) => {
+                              if (userPlanTier(stats?.plan) === "essentiel") {
+                                e.preventDefault();
+                                toast("Le mode GTA 5 Intégral est réservé aux formules Essentiel et Ultimate 🔒", { icon: "👑" });
+                                goToSubscription();
+                              }
+                            }}
+                          >
+                            <div className="relative mt-0.5 flex-shrink-0">
+                              <input
+                                type="checkbox"
+                                checked={fullScene && userPlanTier(stats?.plan) !== "essentiel"}
+                                onChange={(e) => setFullScene(e.target.checked)}
+                                disabled={userPlanTier(stats?.plan) === "essentiel"}
+                                className="sr-only"
+                              />
+                              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                                fullScene && userPlanTier(stats?.plan) !== "essentiel"
+                                  ? "bg-accent-orange border-accent-orange"
+                                  : "border-surface-border group-hover:border-accent-orange/50"
+                              }`}>
+                                {fullScene && userPlanTier(stats?.plan) !== "essentiel" && <span className="text-white text-xs">✓</span>}
+                              </div>
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-sm flex items-center gap-2 flex-wrap">
+                                GTA 5 Intégral
+                                <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
+                                  userPlanTier(stats?.plan) === "essentiel"
+                                    ? "text-white/40 border-surface-border bg-surface-hover"
+                                    : "text-accent-orange border-accent-orange/40 bg-accent-orange/10"
+                                }`}>
+                                  {userPlanTier(stats?.plan) === "essentiel" ? "Réservé Essentiel & Ultimate 🔒" : "Essentiel & Ultimate ✨"}
+                                </span>
+                              </p>
+                              <p className="text-white/45 text-xs mt-0.5 leading-relaxed">
+                                Toute l&apos;image est transformée en style GTA 5 — le décor, l&apos;ambiance et la personne, comme un vrai artwork du jeu.
+                              </p>
+                              <p className="text-white/30 text-[10px] mt-1">
+                                {userPlanTier(stats?.plan) === "elite"
+                                  ? "Votre formule Ultimate : jusqu'à 35 générations Intégral par mois."
+                                  : userPlanTier(stats?.plan) === "pro"
+                                    ? "Votre formule Essentiel : 3 générations Intégral par mois (35 avec Ultimate)."
+                                    : "3 générations/mois avec Essentiel · 35/mois avec Ultimate."}
+                              </p>
+                            </div>
+                          </label>
                         </AnimatedCard>
 
                         <QualitySelector
@@ -1375,7 +1501,7 @@ function DashboardContent() {
                       <Sparkles className="w-10 h-10 text-white/20 mx-auto mb-4" />
                       <p className="text-white/50 font-semibold mb-2">Aucune création</p>
                       <p className="text-white/30 text-sm mb-5">Lance ta première génération</p>
-                      <button onClick={()=>setNavView("create")} className="btn-primary-orange inline-flex items-center gap-2">
+                      <button onClick={()=>changeView("create")} className="btn-primary-orange inline-flex items-center gap-2">
                         <Sparkles className="w-4 h-4" />Créer maintenant
                       </button>
                     </div>
@@ -1534,6 +1660,18 @@ function DashboardContent() {
               )}
 
 
+              {/* ══ COMMUNITY VIEW (réservée Ultimate) ══ */}
+              {navView === "community" && (
+                <motion.div key="community" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
+                  <CommunityView
+                    tier={userPlanTier(stats?.plan)}
+                    isAdmin={userEmail === "gnemmialex@gmail.com"}
+                    isAuthed={isAuthed}
+                    onUpgrade={goToSubscription}
+                  />
+                </motion.div>
+              )}
+
               {/* ══ SUBSCRIPTION VIEW ══ */}
               {navView === "subscription" && (
                 <motion.div key="subscription" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
@@ -1581,10 +1719,13 @@ function DashboardContent() {
                       return (
                         <motion.div key={plan.id}
                           initial={{ opacity: 0, y: 34, scale: 0.94 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          // La carte "Essentiel" (Best Value) est affichée plus grande que les deux autres
+                          animate={{ opacity: 1, y: 0, scale: isBestValue ? 1.07 : 1 }}
                           transition={{ delay: i * 0.1, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-                          whileHover={{ scale: 1.035, y: -4 }}
-                          className="card !bg-black/85 border border-surface-border relative flex flex-col pt-6 mx-auto w-full max-w-[260px] transition-shadow duration-300 hover:shadow-orange-lg cursor-default">
+                          whileHover={{ scale: isBestValue ? 1.1 : 1.035, y: -4 }}
+                          className={`card !bg-black/85 border relative flex flex-col pt-6 mx-auto w-full max-w-[260px] transition-shadow duration-300 hover:shadow-orange-lg cursor-default ${
+                            isBestValue ? "border-green-500/40 z-10" : "border-surface-border"
+                          }`}>
                           {plan.badge && (
                             <span className={`absolute -top-2 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
                               isBestValue ? "bg-green-500 text-white" : "bg-amber-400 text-black"
@@ -1593,17 +1734,18 @@ function DashboardContent() {
                             </span>
                           )}
 
-                          {/* Nom + accroche */}
-                          <p className="font-bold text-xl mb-1">{plan.name}</p>
+                          {/* Nom + accroche — Ultimate : titre, accroche et prix en
+                              dégradé orange animé (comme le nombre de crédits) */}
+                          <p className={`font-bold text-xl mb-1 ${isExclusif ? "gradient-text-orange-subtle" : ""}`}>{plan.name}</p>
                           <p className={`text-[11px] font-semibold mb-3 ${
-                            isExclusif ? "text-amber-400" : isBestValue ? "text-green-400" : "text-white/40"
+                            isExclusif ? "gradient-text-orange-subtle" : isBestValue ? "text-green-400" : "text-white/40"
                           }`}>{plan.tagline}</p>
 
                           {/* Prix */}
                           <p className="text-white/30 text-sm line-through mb-0.5">{plan.originalPrice}€</p>
                           <p className="mb-2 leading-none">
-                            <span className="text-4xl font-black">{priceInt}</span>
-                            <span className="text-lg font-black align-top">,{priceDec}</span>
+                            <span className={`text-4xl font-black ${isExclusif ? "gradient-text-orange-subtle" : ""}`}>{priceInt}</span>
+                            <span className={`text-lg font-black align-top ${isExclusif ? "gradient-text-orange-subtle" : ""}`}>,{priceDec}</span>
                             <span className="text-white/40 text-sm">€ /mois</span>
                           </p>
 
@@ -1611,9 +1753,15 @@ function DashboardContent() {
                           <span className="inline-flex items-center gap-1.5 self-start text-[10px] font-bold px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/30 mb-1.5">
                             <ShieldCheck className="w-3 h-3" />SATISFAIT OU REMBOURSÉ IMMÉDIATEMENT
                           </span>
-                          <p className={`text-white/25 text-[8px] uppercase tracking-wide mb-4 ${planBilling === "monthly" ? "invisible" : ""}`}>
-                            {`Soit ${plan.yearlyTotal}€/an en annuel`}
-                          </p>
+                          {planBilling === "monthly" ? (
+                            <p className="text-white/30 text-[9px] uppercase tracking-wide mb-4">
+                              Prélèvement tous les 28 jours
+                            </p>
+                          ) : (
+                            <p className="text-white/25 text-[8px] uppercase tracking-wide mb-4">
+                              {`Soit ${plan.yearlyTotal}€/an en annuel`}
+                            </p>
+                          )}
 
                           {/* Forfait */}
                           <p className="text-white/40 text-[10px] font-bold uppercase tracking-wide mb-2">Votre forfait inclut :</p>
@@ -1631,9 +1779,14 @@ function DashboardContent() {
 
                           <p className="text-white/40 text-[10px] font-bold uppercase tracking-wide mb-2">Inclus dans le plan :</p>
                           <ul className="space-y-2 mb-5 flex-1">
+                            {/* Les lignes hl (meilleures différences du plan) ressortent en plus clair */}
                             {plan.features.map(f=>(
-                              <li key={f} className="flex items-start gap-2 text-xs text-white/60">
-                                <Check className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-accent-orange" />{f}
+                              <li key={f.text} className={`flex items-start gap-2 text-xs ${
+                                f.hl ? "text-white font-semibold" : "text-white/55"
+                              }`}>
+                                <Check className={`w-3.5 h-3.5 flex-shrink-0 mt-0.5 ${
+                                  f.hl ? (isExclusif ? "text-amber-400" : isBestValue ? "text-green-400" : "text-white") : "text-accent-orange"
+                                }`} />{f.text}
                               </li>
                             ))}
                           </ul>
@@ -1656,22 +1809,25 @@ function DashboardContent() {
                     <h1 className="text-3xl font-black mb-1">Paramètres</h1>
                     <p className="text-white/40">Gérez votre compte et votre abonnement</p>
                   </div>
-                  <div className="max-w-md space-y-4">
-                    <div className="card space-y-4">
-                      <h2 className="font-bold">Informations du compte</h2>
-                      <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl gradient-bg-orange-animated flex items-center justify-center text-white text-xl font-black">{userInitial}</div>
+                  <div className="max-w-xs sm:max-w-md lg:max-w-6xl space-y-3 pb-10">
+                    {/* Sur PC : les 4 cartes tiennent sur une seule et même ligne ;
+                        sur mobile/tablette elles restent empilées (taille réduite). */}
+                    <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-4 lg:gap-3 lg:items-start">
+                    <div className="card !p-3 space-y-2.5">
+                      <h2 className="font-bold text-sm">Informations du compte</h2>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl gradient-bg-orange-animated flex items-center justify-center text-white text-base font-black">{userInitial}</div>
                         <div className="min-w-0">
-                          <p className="font-semibold truncate">{displayName || userEmail || "—"}</p>
-                          <p className="text-white/40 text-sm">
+                          <p className="font-semibold truncate text-sm">{displayName || userEmail || "—"}</p>
+                          <p className="text-white/40 text-xs">
                             Membre depuis {stats?.member_since ? new Date(stats.member_since).toLocaleDateString("fr-FR",{month:"long",year:"numeric"}) : "—"}
                           </p>
                         </div>
                       </div>
 
                       {/* Nom (optionnel, modifiable) */}
-                      <div className="flex items-center justify-between gap-3 py-2 border-t border-surface-border">
-                        <span className="text-white/50 text-sm flex-shrink-0">Nom</span>
+                      <div className="flex items-center justify-between gap-3 py-1.5 border-t border-surface-border">
+                        <span className="text-white/50 text-xs flex-shrink-0">Nom</span>
                         {editingName ? (
                           <div className="flex items-center gap-2 flex-1 justify-end">
                             <input
@@ -1700,25 +1856,25 @@ function DashboardContent() {
                         )}
                       </div>
 
-                      <div className="flex justify-between py-2 border-t border-surface-border">
-                        <span className="text-white/50 text-sm">Adresse e-mail</span>
-                        <span className="font-medium text-white/80 truncate max-w-[220px]">{userEmail ?? "—"}</span>
+                      <div className="flex justify-between py-1.5 border-t border-surface-border">
+                        <span className="text-white/50 text-xs">Adresse e-mail</span>
+                        <span className="font-medium text-white/80 text-xs truncate max-w-[200px]">{userEmail ?? "—"}</span>
                       </div>
-                      <div className="flex justify-between py-2 border-t border-surface-border">
-                        <span className="text-white/50 text-sm">Crédits actuels</span>
-                        <span className="font-bold text-accent-orange">{stats?.credits?.toLocaleString("fr-FR") ?? 0}</span>
+                      <div className="flex justify-between py-1.5 border-t border-surface-border">
+                        <span className="text-white/50 text-xs">Crédits actuels</span>
+                        <span className="font-bold text-accent-orange text-xs">{stats?.credits?.toLocaleString("fr-FR") ?? 0}</span>
                       </div>
-                      <div className="flex justify-between py-2 border-t border-surface-border">
-                        <span className="text-white/50 text-sm">Date d&apos;inscription</span>
-                        <span className="font-medium text-white/80">
+                      <div className="flex justify-between py-1.5 border-t border-surface-border">
+                        <span className="text-white/50 text-xs">Date d&apos;inscription</span>
+                        <span className="font-medium text-white/80 text-xs">
                           {stats?.member_since ? new Date(stats.member_since).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}) : "—"}
                         </span>
                       </div>
                     </div>
 
                     {/* ── Mot de passe ── */}
-                    <div className="card space-y-3">
-                      <h2 className="font-bold flex items-center gap-2">
+                    <div className="card !p-3 space-y-2.5">
+                      <h2 className="font-bold text-sm flex items-center gap-2">
                         <Lock className="w-4 h-4 text-white/40" />
                         Mot de passe
                       </h2>
@@ -1770,17 +1926,17 @@ function DashboardContent() {
                     </div>
 
                     {/* ── Abonnement ── */}
-                    <div className="card space-y-3">
-                      <h2 className="font-bold flex items-center gap-2">
+                    <div className="card !p-3 space-y-2.5">
+                      <h2 className="font-bold text-sm flex items-center gap-2">
                         <Crown className={`w-4 h-4 ${
                           userPlanTier(stats?.plan) === "elite" ? "text-amber-400" :
                           userPlanTier(stats?.plan) === "pro"   ? "text-accent-orange" : "text-white/40"
                         }`} />
                         Abonnement
                       </h2>
-                      <div className="flex justify-between py-2 border-t border-surface-border">
-                        <span className="text-white/50 text-sm">Formule actuelle</span>
-                        <span className={`font-bold ${
+                      <div className="flex justify-between py-1.5 border-t border-surface-border">
+                        <span className="text-white/50 text-xs">Formule actuelle</span>
+                        <span className={`font-bold text-xs ${
                           userPlanTier(stats?.plan) === "elite" ? "text-amber-400" :
                           userPlanTier(stats?.plan) === "pro"   ? "text-accent-orange" : "text-white/70"
                         }`}>
@@ -1793,17 +1949,17 @@ function DashboardContent() {
                         </div>
                       ) : subInfo?.active ? (
                         <>
-                          <div className="flex justify-between py-2 border-t border-surface-border">
-                            <span className="text-white/50 text-sm">Début de l&apos;abonnement</span>
-                            <span className="font-medium text-white/80">
+                          <div className="flex justify-between py-1.5 border-t border-surface-border">
+                            <span className="text-white/50 text-xs">Début de l&apos;abonnement</span>
+                            <span className="font-medium text-white/80 text-xs">
                               {subInfo.started_at ? new Date(subInfo.started_at).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}) : "—"}
                             </span>
                           </div>
-                          <div className="flex justify-between py-2 border-t border-surface-border">
-                            <span className="text-white/50 text-sm">
+                          <div className="flex justify-between py-1.5 border-t border-surface-border">
+                            <span className="text-white/50 text-xs">
                               {subInfo.cancel_at_period_end ? "Fin de l'abonnement" : "Prochain renouvellement"}
                             </span>
-                            <span className={`font-medium ${subInfo.cancel_at_period_end ? "text-red-400" : "text-white/80"}`}>
+                            <span className={`font-medium text-xs ${subInfo.cancel_at_period_end ? "text-red-400" : "text-white/80"}`}>
                               {subInfo.current_period_end ? new Date(subInfo.current_period_end).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}) : "—"}
                             </span>
                           </div>
@@ -1861,35 +2017,28 @@ function DashboardContent() {
                         </div>
                       )}
                     </div>
-                    <div className="card space-y-3">
-                      <h2 className="font-bold">Statistiques</h2>
-                      <div className="flex justify-between py-2 border-b border-surface-border">
-                        <span className="text-white/50 text-sm">Générations totales</span>
-                        <span className="font-bold">{stats?.total_generations ?? generations.length}</span>
+                    <div className="card !p-3 space-y-2">
+                      <h2 className="font-bold text-sm">Statistiques</h2>
+                      <div className="flex justify-between py-1.5 border-b border-surface-border">
+                        <span className="text-white/50 text-xs">Générations totales</span>
+                        <span className="font-bold text-xs">{stats?.total_generations ?? generations.length}</span>
                       </div>
-                      <div className="flex justify-between py-2 border-b border-surface-border">
-                        <span className="text-white/50 text-sm flex items-center gap-1.5">
-                          <span>📸</span> Images IA générées
-                        </span>
-                        <span className="font-bold">{stats?.image_generations ?? 0}</span>
+                      <div className="flex justify-between py-1.5 border-b border-surface-border">
+                        <span className="text-white/50 text-xs">Images générées</span>
+                        <span className="font-bold text-xs">{stats?.image_generations ?? 0}</span>
                       </div>
-                      <div className="flex justify-between py-2 border-b border-surface-border">
-                        <span className="text-white/50 text-sm flex items-center gap-1.5">
-                          <span>🔁</span> Swap visage générés
-                        </span>
-                        <span className="font-bold">{stats?.swapface_generations ?? 0}</span>
+                      <div className="flex justify-between py-1.5 border-b border-surface-border">
+                        <span className="text-white/50 text-xs">Vidéos générées</span>
+                        <span className="font-bold text-xs">{stats?.video_generations ?? 0}</span>
                       </div>
-                      <div className="flex justify-between py-2 border-b border-surface-border">
-                        <span className="text-white/50 text-sm flex items-center gap-1.5">
-                          <span>🎬</span> Vidéos générées
-                        </span>
-                        <span className="font-bold">{stats?.video_generations ?? 0}</span>
-                      </div>
-                      <div className="flex justify-between py-2">
-                        <span className="text-white/50 text-sm">Crédits restants</span>
-                        <span className="font-bold text-accent-orange">{stats?.credits ?? 0}</span>
+                      <div className="flex justify-between py-1.5">
+                        <span className="text-white/50 text-xs">Crédits restants</span>
+                        <span className="font-bold text-accent-orange text-xs">{stats?.credits ?? 0}</span>
                       </div>
                     </div>
+                    </div>{/* fin de la ligne des 4 cartes */}
+
+                    <div className="space-y-3 lg:max-w-md">
                     {/* Accès admin — réservé au compte administrateur */}
                     {userEmail === "gnemmialex@gmail.com" && (
                       <>
@@ -2019,6 +2168,7 @@ function DashboardContent() {
                         </button>
                       </div>
                     )}
+                    </div>{/* fin admin + boutons */}
                   </div>
                 </motion.div>
               )}

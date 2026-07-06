@@ -143,7 +143,7 @@ export default function AdminPage() {
             <div className="w-8 h-8 bg-gradient-violet-neon rounded-lg flex items-center justify-center">
               <Settings className="w-4 h-4 text-white" />
             </div>
-            <span className="font-black text-lg">Highlights <span className="gradient-text">Admin</span></span>
+            <span className="font-black text-lg">High Like It <span className="gradient-text">Admin</span></span>
           </div>
           <a href="/" className="flex items-center gap-2 text-white/50 hover:text-white text-sm transition-colors">
             <LogOut className="w-4 h-4" />

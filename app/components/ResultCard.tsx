@@ -52,7 +52,7 @@ export default function ResultCard({
     try {
       if (navigator.share) {
         await navigator.share({
-          title: "Mon personnage Highlights",
+          title: "Mon personnage High Like It",
           text: "Regardez mon avatar Ultra HD généré par IA (GTA 5, Fortnite, Simpsons, Minecraft) !",
           url: outputUrl,
         });
@@ -78,7 +78,7 @@ export default function ResultCard({
         <div className="relative aspect-square rounded-xl overflow-hidden mb-4 group">
           <Image
             src={showOriginal && inputUrl ? inputUrl : outputUrl}
-            alt="Résultat Highlights"
+            alt="Résultat High Like It"
             fill
             className={`object-cover transition-all duration-300 ${locked && !showOriginal ? "blur-2xl scale-110" : ""}`}
           />

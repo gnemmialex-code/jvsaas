@@ -10,7 +10,7 @@ export default function Footer() {
           <div className="md:col-span-2">
             <Link href="/" className="inline-flex items-center gap-2 mb-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo2.png" alt="Highlights" className="h-11 w-auto rounded-xl" />
+              <img src="/logo2.png" alt="High Like It" className="h-11 w-auto rounded-xl" />
               <span className="font-black text-lg tracking-tight">High<span className="gradient-text">lights</span></span>
             </Link>
             <p className="text-white/50 text-sm leading-relaxed max-w-xs">
@@ -66,9 +66,9 @@ export default function Footer() {
                 Avertissement — Limitation de responsabilité
               </p>
               <p className="text-white/38 text-xs leading-relaxed">
-                Highlights est un outil de divertissement basé sur l&apos;intelligence artificielle.
+                High Like It est un outil de divertissement basé sur l&apos;intelligence artificielle.
                 Les images générées via notre plateforme sont destinées à un usage strictement personnel et récréatif.
-                <strong className="text-white/55 font-semibold"> Highlights ne saurait être tenu responsable, sous quelque prétexte que ce soit, des actions, usages ou diffusions réalisés par ses utilisateurs à la suite des générations effectuées sur la plateforme.</strong>{" "}
+                <strong className="text-white/55 font-semibold"> High Like It ne saurait être tenu responsable, sous quelque prétexte que ce soit, des actions, usages ou diffusions réalisés par ses utilisateurs à la suite des générations effectuées sur la plateforme.</strong>{" "}
                 Toute utilisation à des fins illégales, diffamatoires, commerciales non autorisées, ou portant atteinte aux droits d&apos;un tiers engage la seule et entière responsabilité de l&apos;utilisateur.
                 L&apos;utilisation de notre service vaut acceptation explicite de ces conditions.
               </p>
@@ -78,7 +78,7 @@ export default function Footer() {
 
         <div className="border-t border-surface-border mt-6 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-white/30 text-sm">
-            © 2026 Highlights. Tous droits réservés.
+            © 2026 High Like It. Tous droits réservés.
           </p>
           <p className="text-white/20 text-xs">
             Usage créatif uniquement. Respect des droits à l&apos;image requis.

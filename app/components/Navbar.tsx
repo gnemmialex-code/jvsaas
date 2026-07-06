@@ -21,7 +21,7 @@ interface NavbarProps {
 
 export default function Navbar({
   ctaLabel,
-  ctaHref = "/dashboard?view=create",
+  ctaHref = "/dashboard",
   onCtaClick,
   middleContent,
   wide = false,
@@ -34,11 +34,14 @@ export default function Navbar({
   const pathname = usePathname();
   const router = useRouter();
 
-  const STYLE_TABS = [{ label: t("nav.gta5"), href: "/#examples" }];
+  // Le bouton "Grand Theft Auto V" redirige directement vers le Dashboard.
+  const STYLE_TABS = [{ label: t("nav.gta5"), href: "/dashboard" }];
 
   // Sur le Dashboard mobile : le globe de langue disparaît de la barre et un
   // logo "HL" y prend sa place pour revenir à l'accueil d'un tap.
-  const onDashboard = pathname?.startsWith("/dashboard") ?? false;
+  // Les sections du Dashboard ont désormais chacune leur propre URL.
+  const DASHBOARD_PATHS = ["/dashboard", "/historique", "/parrainage", "/abonnement", "/profil"];
+  const onDashboard = DASHBOARD_PATHS.some((p) => pathname?.startsWith(p)) ?? false;
 
   const openLangMenu = () => {
     const rect = globeRef.current?.getBoundingClientRect();
@@ -54,8 +57,8 @@ export default function Navbar({
     return () => subscription.unsubscribe();
   }, []);
 
-  // Connecté → la page Paramètres du compte (email, crédits, abonnement…)
-  const accountHref = userEmail ? "/dashboard?view=settings" : "/login";
+  // Connecté → la page Mon profil (email, crédits, abonnement…), qui a sa propre URL
+  const accountHref = userEmail ? "/profil" : "/login";
 
   const tabClass =
     "text-[11px] sm:text-[13px] font-light tracking-wide text-white/75 hover:text-white hover:scale-110 transition-all duration-300 whitespace-nowrap shrink-0 inline-block";
@@ -68,16 +71,10 @@ export default function Navbar({
     }
   };
 
-  // Onglet "Grand Theft Auto V" : va directement à la section avant/après de
-  // la page d'accueil, jamais vers une page séparée.
+  // Onglet "Grand Theft Auto V" : redirige directement vers le Dashboard.
   const handleGtaClick = (e: React.MouseEvent) => {
-    if (pathname === "/") {
-      e.preventDefault();
-      document.getElementById("examples")?.scrollIntoView({ behavior: "smooth" });
-    } else {
-      e.preventDefault();
-      router.push("/#examples");
-    }
+    e.preventDefault();
+    router.push("/dashboard");
   };
 
   return (

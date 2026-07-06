@@ -159,7 +159,7 @@ function ResultContent() {
               {[
                 { label: "Style", value: generation.style },
                 { label: "Qualité", value: "4K Ultra HD" },
-                { label: "Modèle", value: "Highlights v2" },
+                { label: "Modèle", value: "High Like It v2" },
                 { label: "Date", value: new Date(generation.created_at).toLocaleDateString("fr-FR") },
               ].map(({ label, value }) => (
                 <div key={label} className="flex justify-between">

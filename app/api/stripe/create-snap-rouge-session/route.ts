@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
             currency: "eur",
             product_data: {
               name:        SNAP_ROUGE_PRODUCT.name,
-              description: "Accès à vie à la technique complète Snap Rouge sur Highlights",
+              description: "Accès à vie à la technique complète Snap Rouge sur High Like It",
             },
             unit_amount: SNAP_ROUGE_PRODUCT.amountCents,
           },

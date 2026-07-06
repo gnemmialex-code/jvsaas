@@ -9,13 +9,13 @@ import { I18nProvider } from "@/lib/i18n";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Highlights — Transformez-vous en personnage IA (GTA 5, Fortnite, Simpsons, Minecraft)",
+  title: "High Like It — Transformez-vous en personnage IA (GTA 5, Fortnite, Simpsons, Minecraft)",
   description:
-    "Uploadez votre photo et découvrez à quoi vous ressembleriez en personnage de GTA 5, Fortnite, Simpsons ou Minecraft grâce à l'IA Ultra HD de Highlights.",
-  keywords: ["Highlights", "IA", "GTA 5", "Fortnite", "Simpsons", "Minecraft", "personnage", "avatar IA", "transformation photo"],
+    "Uploadez votre photo et découvrez à quoi vous ressembleriez en personnage de GTA 5, Fortnite, Simpsons ou Minecraft grâce à l'IA Ultra HD de High Like It.",
+  keywords: ["High Like It", "IA", "GTA 5", "Fortnite", "Simpsons", "Minecraft", "personnage", "avatar IA", "transformation photo"],
   openGraph: {
-    title: "Highlights — Transformez-vous en personnage IA",
-    description: "Uploadez votre photo et voyez-vous en GTA 5, Fortnite, Simpsons ou Minecraft avec l'IA Ultra HD de Highlights",
+    title: "High Like It — Transformez-vous en personnage IA",
+    description: "Uploadez votre photo et voyez-vous en GTA 5, Fortnite, Simpsons ou Minecraft avec l'IA Ultra HD de High Like It",
     type: "website",
   },
 };

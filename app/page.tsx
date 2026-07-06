@@ -334,8 +334,8 @@ function seededFraction(seed: number): number {
 
 // Calcule le compteur du jour à partir de l'heure actuelle uniquement (aucun stockage
 // nécessaire) : il ne peut donc jamais redescendre tant que la journée n'est pas finie,
-// et se réinitialise naturellement à minuit. 0 → 10 000 en 5h, puis 10 000 → objectif
-// aléatoire du jour (entre 40 000 et 99 000) réparti sur les 19h restantes.
+// et se réinitialise naturellement à minuit. 0 → 1 000 en 5h, puis 1 000 → objectif
+// aléatoire du jour (entre 4 000 et 9 900) réparti sur les 19h restantes.
 function computeDailyCount(): number {
   const now = new Date();
   const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -343,12 +343,12 @@ function computeDailyCount(): number {
   const elapsedH = (now.getTime() - midnight.getTime()) / 3_600_000;
 
   if (elapsedH <= 5) {
-    return Math.floor(10000 * (elapsedH / 5));
+    return Math.floor(1000 * (elapsedH / 5));
   }
 
-  const dayTarget = 40000 + Math.floor(seededFraction(daySeed) * 59000);
+  const dayTarget = 4000 + Math.floor(seededFraction(daySeed) * 5900);
   const hoursLeft = 19;
-  const totalGrowth = dayTarget - 10000;
+  const totalGrowth = dayTarget - 1000;
 
   const weights: number[] = [];
   let sumWeights = 0;
@@ -361,13 +361,13 @@ function computeDailyCount(): number {
   const hourIndex = Math.min(hoursLeft - 1, Math.floor(elapsedH - 5));
   const hourFraction = elapsedH - 5 - hourIndex;
 
-  let value = 10000;
+  let value = 1000;
   for (let i = 0; i < hourIndex; i++) {
     value += (weights[i] / sumWeights) * totalGrowth;
   }
   value += (weights[hourIndex] / sumWeights) * totalGrowth * hourFraction;
 
-  return Math.min(99000, Math.floor(value));
+  return Math.min(9900, Math.floor(value));
 }
 
 function LiveGenerationsCounter() {
@@ -435,7 +435,7 @@ function LiveGenerationsCounter() {
         </div>
         <p className="text-[9px] text-white/60 whitespace-nowrap">
           <span className="font-bold text-white mr-1">{count.toLocaleString("fr-FR")}</span> {t("hero.liveCounter")}{" "}
-          <span className="font-bold gradient-text-orange-subtle">Highlights</span>
+          <span className="font-bold gradient-text-orange-subtle">High Like It</span>
         </p>
       </div>
     </motion.div>

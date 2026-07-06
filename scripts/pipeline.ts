@@ -179,6 +179,9 @@ export interface PipelineInput {
   celebGender?:       string;
   /** Script maître (verrous fond/identité/qualité) — désactivable par l'admin pour tester. */
   masterScriptEnabled?: boolean;
+  /** Mode "GTA 5 Intégral" : toute l'image (décor compris) est transformée.
+      Réservé Essentiel/Ultimate — change aussi les réglages du modèle IA. */
+  fullScene?: boolean;
 }
 
 async function withRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
@@ -397,6 +400,17 @@ export const GTA5_STYLE_BOOST =
   "clean bold outlines, cel-shaded lighting, rich saturated colors, sharp details, " +
   "the whole image rendered in this style — not a photo filter, a true GTA 5 illustration.";
 
+// ─── MODE "GTA 5 INTÉGRAL" (toute l'image transformée, décor compris) ───────
+// Réservé aux formules Essentiel (3/mois) et Ultimate (35/mois). À l'inverse du
+// MASTER_PROMPT (qui gèle le fond), celui-ci demande la transformation de la
+// TOTALITÉ de l'image en style GTA 5.
+export const FULL_SCENE_MASTER_PROMPT =
+  "Redraw this ENTIRE photo in GTA 5 art style — every single part of the image: " +
+  "the person, the clothing, the background, the environment, the sky, every object. " +
+  "Keep the same composition, the same pose and the same framing, and keep the person " +
+  "instantly recognizable, but the WHOLE scene becomes one coherent GTA 5 illustration — " +
+  "nothing stays photographic.";
+
 // Negative prompt maître — court et ciblé. Le modèle Flux LoRA n'ayant pas
 // d'entrée "negative_prompt", cette liste est injectée dans le prompt final
 // sous forme de clause NEVER GENERATE (voir GTA_STYLE_SPEC).
@@ -405,6 +419,10 @@ export const MASTER_NEGATIVE_PROMPT =
   "changed body, changed proportions, distorted anatomy, extra or missing limbs, extra fingers, " +
   "added elements, removed elements, invented objects, changed background, changed pose, changed framing, " +
   "photorealistic output, unstyled photo, low quality, blurry, artifacts, text, watermark, nsfw";
+
+// Variante pour le mode "GTA 5 Intégral" : identique, mais sans l'interdiction
+// de changer le fond (puisque tout le décor est justement re-stylisé).
+const FULL_SCENE_NEGATIVE_PROMPT = MASTER_NEGATIVE_PROMPT.replace("changed background, ", "");
 
 // ─── PROMPT BUILDER ───────────────────────────────────────────────────────────
 //
@@ -420,6 +438,7 @@ function buildStylePrompt(
   celebRefCount?:  number,
   styleId?:        string,
   masterEnabled:   boolean = true,
+  fullScene:       boolean = false,
 ): { positive: string; negative: string } {
   const character  = isCharacterStyle(styleId);
   const translated = translateToEnglish(customPrompt.trim());
@@ -532,14 +551,16 @@ function buildStylePrompt(
   const positive =
     `${editInstruction}.${renderRule}${outfitRule} ` +
     (character ? CHARACTER_SYSTEM_CONTEXT : HIDDEN_SYSTEM_CONTEXT) +
-    (masterEnabled ? " " + MASTER_PROMPT : "") +
+    // Mode "GTA 5 Intégral" : toute l'image est stylisée (décor compris) ;
+    // sinon, script maître classique qui gèle le fond.
+    (masterEnabled ? " " + (fullScene ? FULL_SCENE_MASTER_PROMPT : MASTER_PROMPT) : "") +
     // Direction artistique GTA 5 complète quand le style GTA 5 est choisi.
     (masterEnabled && styleId === "gta5" ? " " + GTA5_STYLE_BOOST : "");
 
   // Negative maître fusionné avec le negative du mode (le mode personnage ne
   // bannit pas cartoon/illustration, le mode scène si).
   const negative = masterEnabled
-    ? `${character ? CHARACTER_NEG : NEG}, ${MASTER_NEGATIVE_PROMPT}`
+    ? `${character ? CHARACTER_NEG : NEG}, ${fullScene ? FULL_SCENE_NEGATIVE_PROMPT : MASTER_NEGATIVE_PROMPT}`
     : (character ? CHARACTER_NEG : NEG);
 
   return { positive, negative };
@@ -743,6 +764,7 @@ export type AsyncJobConfig = {
   celebRefCount?:     number;
   celebName?:         string;
   celebGender?:       string;
+  fullScene?:         boolean;
 };
 
 async function createPred(
@@ -785,6 +807,7 @@ export function buildAsyncJobConfig(
     clippedRefCount,
     input.styleId,
     input.masterScriptEnabled ?? true,
+    input.fullScene ?? false,
   );
 
   // ── Résolution cible (héritée du tier — ignorée par le modèle Flux LoRA,
@@ -820,6 +843,7 @@ export function buildAsyncJobConfig(
     celebRefImageUrl:   clippedRefUrls[0],
     celebRefImageUrls:  clippedRefUrls,
     celebRefCount:      clippedRefCount,
+    fullScene:          input.fullScene ?? false,
   };
 }
 
@@ -863,20 +887,30 @@ export async function startAsyncJob(
   console.log(`[Pipeline] Strength: ${config.strength ?? 0.62}`);
   console.log(`[Pipeline] Celebrity refs: ${celebRefB64s.length > 0 ? celebRefB64s.length : "none"}`);
 
-  const p = await createPred(
-    model.spec,
-    model.buildInput(
-      config.prompt       ?? "",
-      config.negPrompt    ?? NEG,
-      imageData,
-      config.strength     ?? 0.62,
-      config.resolution,
-      celebRefB64s[0],
-      celebRefB64s,
-      config.outputFormat,
-      config.allowFallback,
-    ),
-  );
+  const modelInput = model.buildInput(
+    config.prompt       ?? "",
+    config.negPrompt    ?? NEG,
+    imageData,
+    config.strength     ?? 0.62,
+    config.resolution,
+    celebRefB64s[0],
+    celebRefB64s,
+    config.outputFormat,
+    config.allowFallback,
+  ) as Record<string, unknown>;
+
+  // Mode "GTA 5 Intégral" UNIQUEMENT : réglages du modèle IA spécifiques
+  // (valeurs dédiées à la transformation de toute l'image). Si le mode n'est
+  // pas sélectionné, les réglages actuels restent strictement inchangés.
+  if (config.fullScene) {
+    modelInput.aspect_ratio        = "9:16";
+    modelInput.prompt_strength     = 0.58;
+    modelInput.num_inference_steps = 25;
+    modelInput.output_quality      = 71;
+    console.log("[Pipeline] Mode GTA 5 Intégral : réglages IA dédiés appliqués (9:16 / 0.58 / 25 / 71)");
+  }
+
+  const p = await createPred(model.spec, modelInput);
   return p.id;
 }
 

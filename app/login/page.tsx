@@ -145,7 +145,7 @@ export default function LoginPage() {
         className="w-full max-w-md relative z-10"
       >
         <p className="text-center text-4xl font-black italic tracking-wide gradient-text-orange-subtle mb-5">
-          Highlights
+          High Like It
         </p>
 
         <motion.div

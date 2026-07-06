@@ -46,7 +46,7 @@ export default function ConsentPage() {
             <div className="text-sm text-white">
               <p className="font-semibold text-white mb-1">Information importante sur les images générées</p>
               <p>
-                Le Service Highlights génère des visuels de <span className="text-white font-semibold">personnages
+                Le Service High Like It génère des visuels de <span className="text-white font-semibold">personnages
                 (GTA 5, Fortnite, Simpsons, Minecraft)</span> à partir d&apos;une photo que vous téléversez. Les images produites sont des
                 <span className="text-white font-semibold"> créations par intelligence artificielle</span> destinées à
                 un usage personnel et récréatif. En utilisant le Service, vous acceptez la présente politique, que vous
@@ -58,7 +58,7 @@ export default function ConsentPage() {
 
         <Section title="1. Nature des données traitées">
           <p>
-            Lorsque vous téléversez une photographie sur Highlights, cette image est transmise à nos modèles
+            Lorsque vous téléversez une photographie sur High Like It, cette image est transmise à nos modèles
             d&apos;intelligence artificielle afin de vous transformer en personnage (GTA 5, Fortnite, Simpsons ou
             Minecraft). La photo sert uniquement de support visuel (visage, cadrage, ambiance) à la génération de
             l&apos;image finale.
@@ -137,7 +137,7 @@ export default function ConsentPage() {
             Les noms d&apos;univers et de jeux (GTA 5 / Grand Theft Auto, Fortnite, Les Simpson, Minecraft, etc.) ainsi que
             leurs personnages et logos sont des <span className="text-white font-semibold">marques déposées</span> appartenant
             à leurs propriétaires respectifs (Rockstar Games, Epic Games, The Walt Disney Company, Mojang/Microsoft, etc.).
-            Highlights n&apos;est ni affilié, ni sponsorisé, ni approuvé par ces
+            High Like It n&apos;est ni affilié, ni sponsorisé, ni approuvé par ces
             marques. Les visuels générés sont des <span className="text-white font-semibold">interprétations de style créées par
             IA</span> et ne constituent ni des produits officiels, ni des reproductions approuvées.
           </p>

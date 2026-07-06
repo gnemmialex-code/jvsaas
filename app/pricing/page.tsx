@@ -366,7 +366,7 @@ export default function PricingPage() {
                   )}
                 </div>
 
-                {/* Highlights — qualité / vitesse / file */}
+                {/* High Like It — qualité / vitesse / file */}
                 <div className="grid grid-cols-3 gap-2 mb-5">
                   {plan.highlights.map((h) => (
                     <div key={h.label} className="bg-surface-hover rounded-lg px-2 py-2 text-center">
@@ -516,7 +516,7 @@ export default function PricingPage() {
 
           {/* Note abonnement requis */}
           <p className="text-center text-white/30 text-xs mt-4">
-            Un compte Highlights est requis. Les crédits achetés ne sont pas remboursables.
+            Un compte High Like It est requis. Les crédits achetés ne sont pas remboursables.
           </p>
         </motion.div>
 

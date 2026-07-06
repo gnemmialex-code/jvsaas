@@ -13,7 +13,7 @@ const TECHNIQUE_VIDEO_URL = "/api/snap-rouge/video";
 
 // Étapes de la technique — personnalise librement les textes ci-dessous.
 const TECHNIQUE_STEPS = [
-  { title: "Préparez votre photo", desc: "Générez votre transformation IA sur Highlights et téléchargez le résultat en haute qualité sur votre téléphone." },
+  { title: "Préparez votre photo", desc: "Générez votre transformation IA sur High Like It et téléchargez le résultat en haute qualité sur votre téléphone." },
   { title: "Ouvrez Snapchat", desc: "Lancez Snapchat et accédez à l'appareil photo principal." },
   { title: "Appliquez la technique", desc: "Suivez précisément la vidéo ci-dessous pour envoyer votre image en Snap Rouge (et non en Snap violet)." },
   { title: "Envoyez votre Snap", desc: "Votre photo part comme un vrai Snap pris sur le moment — effet garanti." },

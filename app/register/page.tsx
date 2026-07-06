@@ -3,11 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { Mail, Lock, Eye, EyeOff, Zap, Gift } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mail, Lock, Eye, EyeOff, Zap, Gift, Globe } from "lucide-react";
 import toast from "react-hot-toast";
 import Input from "../components/Input";
 import { supabase } from "@/lib/supabase";
+import { LOCALES, useI18n } from "@/lib/i18n";
 
 function GoogleIcon() {
   return (
@@ -17,6 +18,47 @@ function GoogleIcon() {
       <path d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z" fill="#FBBC05"/>
       <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.96L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
     </svg>
+  );
+}
+
+// Même sélecteur de langue que la page de connexion (design dupliqué).
+function LanguageMenu() {
+  const { locale, setLocale } = useI18n();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div
+      className="fixed bottom-5 left-5 z-50"
+      onMouseEnter={() => setOpen(true)}
+      onMouseLeave={() => setOpen(false)}
+    >
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0, y: 8, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="absolute bottom-full left-0 mb-2 w-32 flex flex-col rounded-xl border border-white/10 bg-[#0a0a0a]/95 backdrop-blur-2xl shadow-2xl overflow-hidden py-1"
+          >
+            {LOCALES.map((lang) => (
+              <button
+                key={lang.code}
+                onClick={() => { setLocale(lang.code); setOpen(false); }}
+                className={`px-4 py-2 text-left text-[13px] font-light transition-colors hover:bg-white/[0.06] ${
+                  locale === lang.code ? "text-accent-orange font-semibold" : "text-white/75 hover:text-white"
+                }`}
+              >
+                {lang.label}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <span className="flex items-center justify-center w-8 h-8 rounded-full bg-black border border-white/10 text-white/70 cursor-pointer">
+        <Globe className="w-[15px] h-[15px]" strokeWidth={1.25} />
+      </span>
+    </div>
   );
 }
 
@@ -78,7 +120,9 @@ export default function RegisterPage() {
       // directement une session et est connecté immédiatement.
       if (data.session) {
         toast.success("Compte créé ! Bienvenue 🎉");
-        router.push("/dashboard");
+        // Redirection directe vers le dashboard, en navigation complète pour
+        // que le cookie de session soit bien pris en compte partout.
+        window.location.href = "/dashboard";
       } else {
         // Sécurité : si la confirmation email est encore activée côté Supabase,
         // on renvoie vers la connexion sans bloquer.
@@ -115,42 +159,46 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative">
-      <div className="absolute inset-0 grid-bg pointer-events-none" />
-      <div className="absolute top-1/4 right-1/3 w-64 h-64 bg-accent-neon/10 rounded-full blur-3xl" />
+      <div className="absolute top-1/4 left-1/3 w-64 h-64 bg-accent-violet/15 rounded-full blur-3xl" />
+      <LanguageMenu />
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 36, scale: 0.94 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
         className="w-full max-w-md relative z-10"
       >
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-block mb-6 select-none">
-            {/* Même logo que la page d'accueil (Navbar) */}
-            <span className="text-4xl sm:text-5xl italic font-black tracking-wide gradient-text-orange-subtle">
-              HL
-            </span>
-          </Link>
-          <h1 className="text-3xl font-bold mb-2">Créer un compte</h1>
+        <p className="text-center text-4xl font-black italic tracking-wide gradient-text-orange-subtle mb-3">
+          High Like It
+        </p>
+
+        <div className="text-center mb-5 space-y-2">
+          <h1 className="text-xl font-bold text-white/90">Créer un compte</h1>
           <div className="inline-flex items-center gap-1.5 bg-green-500/10 border border-green-500/30 text-green-400 text-sm px-3 py-1.5 rounded-full">
             <Zap className="w-3.5 h-3.5" />
             100 crédits offerts = 1 image gratuite
           </div>
           {refCode && (
-            <div className="mt-3 inline-flex items-center gap-1.5 bg-accent-violet/10 border border-accent-violet/30 text-accent-violet text-sm px-3 py-1.5 rounded-full">
-              <Gift className="w-3.5 h-3.5" />
-              Code parrain <strong>{refCode}</strong> — +100 crédits bonus
+            <div className="block">
+              <div className="inline-flex items-center gap-1.5 bg-accent-violet/10 border border-accent-violet/30 text-accent-violet text-sm px-3 py-1.5 rounded-full">
+                <Gift className="w-3.5 h-3.5" />
+                Code parrain <strong>{refCode}</strong> — +100 crédits bonus
+              </div>
             </div>
           )}
         </div>
 
-        <div className="card">
-          {/* OAuth buttons */}
+        <motion.div
+          whileHover={{ scale: 1.015 }}
+          transition={{ duration: 0.3 }}
+          className="card !bg-black/90 !backdrop-blur-lg transition-shadow duration-300 hover:shadow-orange-lg"
+        >
           <div className="flex flex-col gap-3 mb-6">
             <button
               type="button"
               onClick={() => handleOAuth("google")}
               disabled={!!oauthLoading}
-              className="w-full flex items-center justify-center gap-3 py-2.5 rounded-xl border border-surface-border bg-white/5 hover:bg-white/10 transition-all text-sm font-medium text-white disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-sm font-medium text-white disabled:opacity-50"
             >
               <GoogleIcon />
               {oauthLoading === "google" ? "Redirection..." : "Continuer avec Google"}
@@ -159,10 +207,10 @@ export default function RegisterPage() {
 
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-surface-border" />
+              <div className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-surface px-3 text-white/30 text-sm">ou</span>
+              <span className="bg-black px-3 text-white/30 text-sm">ou</span>
             </div>
           </div>
 
@@ -219,7 +267,7 @@ export default function RegisterPage() {
                 />
                 <div
                   className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                    acceptTerms ? "bg-accent-violet border-accent-violet" : "border-surface-border"
+                    acceptTerms ? "bg-accent-orange border-accent-orange" : "border-white/10"
                   }`}
                 >
                   {acceptTerms && <span className="text-white text-xs">✓</span>}
@@ -227,9 +275,9 @@ export default function RegisterPage() {
               </div>
               <span className="text-white/60 text-sm leading-relaxed">
                 J&apos;accepte les{" "}
-                <Link href="/terms" className="text-accent-violet hover:underline">CGU</Link>{" "}
+                <Link href="/terms" className="text-accent-orange hover:underline">CGU</Link>{" "}
                 et la{" "}
-                <Link href="/privacy" className="text-accent-violet hover:underline">politique de confidentialité</Link>.
+                <Link href="/privacy" className="text-accent-orange hover:underline">politique de confidentialité</Link>.
                 Usage personnel uniquement.
               </span>
             </label>
@@ -237,22 +285,25 @@ export default function RegisterPage() {
               <p className="text-red-400 text-sm -mt-2">{errors.terms}</p>
             )}
 
-            <button
+            <motion.button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full py-3 flex items-center justify-center gap-2"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
+              className="w-full bg-white text-black text-lg font-black px-8 py-3 flex items-center justify-center gap-2 rounded-2xl shadow-2xl disabled:opacity-50"
             >
               {loading ? "Création..." : "Créer mon compte gratuit"}
-            </button>
+            </motion.button>
           </form>
+        </motion.div>
 
-          <p className="text-center text-white/50 text-sm mt-4">
-            Déjà un compte ?{" "}
-            <Link href="/login" className="text-accent-violet hover:underline">
-              Se connecter
-            </Link>
-          </p>
-        </div>
+        <p className="text-xs text-white/40 text-center mt-5">
+          Déjà un compte ?{" "}
+          <Link href="/login" className="text-accent-orange hover:underline">
+            Se connecter
+          </Link>
+        </p>
       </motion.div>
     </div>
   );

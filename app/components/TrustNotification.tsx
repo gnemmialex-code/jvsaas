@@ -40,28 +40,14 @@ function pickRandom<T>(arr: T[]): T {
 
 let counter = 0;
 
-// Cadence volontairement irrégulière pour un rendu crédible : tantôt deux
-// notifications se suivent de près (rafale), tantôt un long silence s'installe.
-function nextDelayMs(): number {
-  const r = Math.random();
-  if (r < 0.35) {
-    // Rafale : une 2e notif arrive vite après la précédente (2-9 min).
-    return (2 + Math.random() * 7) * 60_000;
-  }
-  if (r < 0.75) {
-    // Rythme courant (15-45 min).
-    return (15 + Math.random() * 30) * 60_000;
-  }
-  // Accalmie : jusqu'à ~3h de silence.
-  return (75 + Math.random() * 105) * 60_000;
-}
+// La notification démarre immédiatement au lancement du site, puis change
+// toutes les 5 secondes.
+const ROTATE_MS = 5_000;
 
 export default function TrustNotification() {
   const [notif, setNotif] = useState<{ id: number; username: string; count: number } | null>(null);
 
   useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout>;
-
     const show = () => {
       const count = pickRandom(IMAGE_COUNTS);
       setNotif({
@@ -70,16 +56,17 @@ export default function TrustNotification() {
         count,
       });
       window.dispatchEvent(new CustomEvent("highlights:generated", { detail: { count } }));
-      timeoutId = setTimeout(show, nextDelayMs());
     };
 
-    timeoutId = setTimeout(show, 8000);
+    // Première notification dès l'arrivée sur le site, puis rotation.
+    show();
+    const intervalId = setInterval(show, ROTATE_MS);
 
-    return () => clearTimeout(timeoutId);
+    return () => clearInterval(intervalId);
   }, []);
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 pointer-events-none hidden sm:block">
+    <div className="fixed bottom-4 left-4 z-50 pointer-events-none">
       <svg width="0" height="0" style={{ position: "absolute" }}>
         <defs>
           <linearGradient id="cartGreenGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -89,7 +76,7 @@ export default function TrustNotification() {
           </linearGradient>
         </defs>
       </svg>
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {notif && (
           <motion.div
             key={notif.id}
@@ -97,11 +84,12 @@ export default function TrustNotification() {
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 1.08 }}
             whileHover={{ scale: 1.03, transition: { duration: 0.4, ease: "easeOut" } }}
-            transition={{ duration: 1.4, ease: "easeInOut" }}
-            className="flex items-center gap-2 px-3 py-2.5 bg-black/70 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl whitespace-nowrap pointer-events-auto"
+            transition={{ duration: 0.6, ease: "easeInOut" }}
+            className="flex items-center gap-2.5 sm:gap-2 px-4 py-3.5 sm:px-3 sm:py-2.5 bg-black/70 backdrop-blur-md border border-white/10 rounded-xl shadow-2xl whitespace-nowrap pointer-events-auto"
           >
-            <ShoppingCart className="w-4 h-4 flex-shrink-0" stroke="url(#cartGreenGradient)" strokeWidth={2.5} />
-            <p className="text-white/80 text-xs">
+            {/* Légèrement plus grand sur téléphone uniquement — taille inchangée dès sm (tablette/ordinateur) */}
+            <ShoppingCart className="w-5 h-5 sm:w-4 sm:h-4 flex-shrink-0" stroke="url(#cartGreenGradient)" strokeWidth={2.5} />
+            <p className="text-white/80 text-sm sm:text-xs">
               <span className="font-semibold text-white">@{notif.username}</span>{" "}
               vient de générer à l&apos;instant :{" "}
               <span className="gradient-text-neon-green font-bold">

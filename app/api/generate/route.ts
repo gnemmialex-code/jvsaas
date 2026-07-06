@@ -28,6 +28,17 @@ const CREDITS_PER_TIER: Record<string, number> = {
   ultra:     150,
 };
 
+// ── Mode "GTA 5 Intégral" (toute l'image transformée, décor compris) ─────────
+// Réservé aux formules Essentiel (plan pro) et Ultimate (plan ultra), avec un
+// quota mensuel : 3 générations pour Essentiel, 35 pour Ultimate.
+const FULL_SCENE_LABEL = "GTA 5 Intégral";
+const FULL_SCENE_MONTHLY_LIMITS: Record<string, number> = {
+  free:      0,
+  essentiel: 0,
+  pro:       3,
+  ultra:     35,
+};
+
 function generateId(): string {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
 }
@@ -175,6 +186,7 @@ export async function POST(req: NextRequest) {
       const styleId        = formData.get("style_id")     as string | null;
       const rawStylePrompt = formData.get("style_prompt") as string | null;
       const customPrompt   = (formData.get("custom_prompt") as string) ?? "";
+      const fullScene      = (formData.get("full_scene") as string | null) === "1";
       styleLabel           = (formData.get("style_label") as string) ?? "Génération IA";
 
       if (!imageFile) {
@@ -182,6 +194,39 @@ export async function POST(req: NextRequest) {
       }
       if (!rawStylePrompt && !customPrompt.trim()) {
         return NextResponse.json({ error: "Veuillez choisir un style ou entrer une description" }, { status: 400 });
+      }
+
+      // ── Mode "GTA 5 Intégral" : accès + quota mensuel vérifiés côté serveur ──
+      if (fullScene) {
+        const fullSceneLimit = FULL_SCENE_MONTHLY_LIMITS[qualityTier] ?? 0;
+        if (!userId || fullSceneLimit === 0) {
+          return NextResponse.json(
+            { error: "Le mode GTA 5 Intégral est réservé aux formules Essentiel et Ultimate.", upgrade: true },
+            { status: 403 }
+          );
+        }
+        const admin = createSupabaseAdmin();
+        const monthStart = new Date();
+        monthStart.setDate(1);
+        monthStart.setHours(0, 0, 0, 0);
+        const { count } = await admin
+          .from("generations")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("style", FULL_SCENE_LABEL)
+          .gte("created_at", monthStart.toISOString());
+        if ((count ?? 0) >= fullSceneLimit) {
+          return NextResponse.json(
+            {
+              error: qualityTier === "pro"
+                ? `Quota GTA 5 Intégral atteint (${fullSceneLimit}/mois avec Essentiel). Passez à Ultimate pour 35 générations par mois.`
+                : `Quota GTA 5 Intégral atteint (${fullSceneLimit} générations ce mois-ci). Il se réinitialise le 1er du mois prochain.`,
+              upgrade: qualityTier === "pro",
+            },
+            { status: 403 }
+          );
+        }
+        styleLabel = FULL_SCENE_LABEL;
       }
 
       const stylePrompt = rawStylePrompt
@@ -228,6 +273,8 @@ export async function POST(req: NextRequest) {
         celebGender:    primaryCeleb?.gender,
         // Script maître (verrous fond/identité/qualité) — togglable par l'admin
         masterScriptEnabled: await isMasterScriptEnabled(),
+        // Mode GTA 5 Intégral : toute l'image stylisée + réglages IA dédiés
+        fullScene,
       };
 
       jobConfig    = buildAsyncJobConfig(pipelineInput, sourceB64);

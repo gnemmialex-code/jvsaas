@@ -4,8 +4,8 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
 export const metadata = {
-  title: "Conditions Générales d'Utilisation — Highlights",
-  description: "Conditions Générales d'Utilisation du service Highlights.",
+  title: "Conditions Générales d'Utilisation — High Like It",
+  description: "Conditions Générales d'Utilisation du service High Like It.",
 };
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -41,12 +41,12 @@ export default function TermsPage() {
 
         <Section title="1. Présentation du service et mentions légales">
           <p>
-            Highlights (ci-après « le Service ») est une plateforme de transformation d&apos;images par intelligence
+            High Like It (ci-après « le Service ») est une plateforme de transformation d&apos;images par intelligence
             artificielle, éditée et exploitée par la société ci-dessous (ci-après « l&apos;Éditeur ») :
           </p>
           <div className="bg-surface border border-surface-border rounded-xl p-4 mt-2 space-y-1">
             <p><span className="text-white font-medium">Dénomination sociale :</span> SAS Progressio</p>
-            <p><span className="text-white font-medium">Nom commercial :</span> Rise and Close (marque Highlights)</p>
+            <p><span className="text-white font-medium">Nom commercial :</span> Rise and Close (marque High Like It)</p>
             <p><span className="text-white font-medium">Forme juridique :</span> Société par actions simplifiée (SAS)</p>
             <p><span className="text-white font-medium">Siège social :</span> 4 rue du 8 mai 1945, 91470 Limours, France</p>
             <p><span className="text-white font-medium">SIREN :</span> 100 853 746</p>
