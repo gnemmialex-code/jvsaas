@@ -19,6 +19,9 @@ interface NavbarProps {
   wide?: boolean;
 }
 
+// Compte administrateur : accès GTA 6 sans condition de formule.
+const ADMIN_EMAIL = "gnemmialex@gmail.com";
+
 export default function Navbar({
   ctaLabel,
   ctaHref = "/dashboard",
@@ -28,6 +31,8 @@ export default function Navbar({
 }: NavbarProps) {
   const { locale, setLocale, t } = useI18n();
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  // Accès à la section GTA 6 : Admin ou formule Ultimate (elite/ultra).
+  const [gta6Access, setGta6Access] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [langCoords, setLangCoords] = useState({ top: 0, right: 0 });
   const globeRef = useRef<HTMLSpanElement>(null);
@@ -40,7 +45,7 @@ export default function Navbar({
   // Sur le Dashboard mobile : le globe de langue disparaît de la barre et un
   // logo "HL" y prend sa place pour revenir à l'accueil d'un tap.
   // Les sections du Dashboard ont désormais chacune leur propre URL.
-  const DASHBOARD_PATHS = ["/dashboard", "/historique", "/parrainage", "/abonnement", "/profil"];
+  const DASHBOARD_PATHS = ["/dashboard", "/gta6", "/historique", "/parrainage", "/communaute", "/abonnement", "/profil"];
   const onDashboard = DASHBOARD_PATHS.some((p) => pathname?.startsWith(p)) ?? false;
 
   const openLangMenu = () => {
@@ -56,6 +61,20 @@ export default function Navbar({
     });
     return () => subscription.unsubscribe();
   }, []);
+
+  // L'onglet "Grand Theft Auto VI" devient cliquable pour l'Admin ou les
+  // membres Ultimate ; sinon il reste grisé "Disponible prochainement".
+  useEffect(() => {
+    if (!userEmail) { setGta6Access(false); return; }
+    if (userEmail === ADMIN_EMAIL) { setGta6Access(true); return; }
+    fetch("/api/credits")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((d) => {
+        const p = ((d?.plan as string | undefined) ?? "").toLowerCase();
+        setGta6Access(p.includes("ultra") || p.includes("elite"));
+      })
+      .catch(() => setGta6Access(false));
+  }, [userEmail]);
 
   // Connecté → la page Mon profil (email, crédits, abonnement…), qui a sa propre URL
   const accountHref = userEmail ? "/profil" : "/login";
@@ -158,15 +177,29 @@ export default function Navbar({
           /* Onglets GTA masqués sur mobile : la barre se réduit à
              "Compte" + "Commencer Maintenant", sans défilement horizontal. */
           <div className="hidden sm:flex items-center gap-5 shrink-0">
-            {/* Grand Theft Auto VI — indisponible */}
-            <div className="flex flex-col items-center justify-center gap-0.5 shrink-0 cursor-default select-none">
-              <span className="text-[13px] font-light tracking-wide text-white/25 whitespace-nowrap leading-none">
-                {t("nav.gta6.label")}
-              </span>
-              <span className="text-[8px] italic font-semibold text-white/30 whitespace-nowrap leading-none mt-[1px]">
-                {t("nav.gta6.soon")}
-              </span>
-            </div>
+            {/* Grand Theft Auto VI — cliquable pour Admin / Ultimate, sinon grisé */}
+            {gta6Access ? (
+              <Link
+                href="/gta6"
+                className="flex flex-col items-center justify-center gap-0.5 shrink-0 select-none hover:scale-110 transition-all duration-300 group"
+              >
+                <span className="text-[13px] font-light tracking-wide text-amber-400/90 group-hover:text-amber-300 whitespace-nowrap leading-none transition-colors">
+                  {t("nav.gta6.label")}
+                </span>
+                <span className="text-[8px] italic font-semibold text-amber-400/60 whitespace-nowrap leading-none mt-[1px]">
+                  {t("nav.gta6.unlocked")}
+                </span>
+              </Link>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-0.5 shrink-0 cursor-default select-none">
+                <span className="text-[13px] font-light tracking-wide text-white/25 whitespace-nowrap leading-none">
+                  {t("nav.gta6.label")}
+                </span>
+                <span className="text-[8px] italic font-semibold text-white/30 whitespace-nowrap leading-none mt-[1px]">
+                  {t("nav.gta6.soon")}
+                </span>
+              </div>
+            )}
 
             {STYLE_TABS.map((tab) => (
               <Link key={tab.label} href={tab.href} onClick={handleGtaClick} className={tabClass}>

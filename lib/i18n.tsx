@@ -23,6 +23,7 @@ const translations: Record<Locale, Dict> = {
   fr: {
     "nav.gta6.label": "Grand Theft Auto VI",
     "nav.gta6.soon": "Disponible prochainement",
+    "nav.gta6.unlocked": "Accès anticipé débloqué",
     "nav.gta5": "Grand Theft Auto V",
     "nav.login": "Compte",
     "nav.profile": "Mon profil",
@@ -74,6 +75,7 @@ const translations: Record<Locale, Dict> = {
   en: {
     "nav.gta6.label": "Grand Theft Auto VI",
     "nav.gta6.soon": "Coming soon",
+    "nav.gta6.unlocked": "Early access unlocked",
     "nav.gta5": "Grand Theft Auto V",
     "nav.login": "Account",
     "nav.profile": "My profile",
@@ -124,6 +126,7 @@ const translations: Record<Locale, Dict> = {
   es: {
     "nav.gta6.label": "Grand Theft Auto VI",
     "nav.gta6.soon": "Próximamente",
+    "nav.gta6.unlocked": "Acceso anticipado desbloqueado",
     "nav.gta5": "Grand Theft Auto V",
     "nav.login": "Cuenta",
     "nav.profile": "Mi perfil",
@@ -174,6 +177,7 @@ const translations: Record<Locale, Dict> = {
   de: {
     "nav.gta6.label": "Grand Theft Auto VI",
     "nav.gta6.soon": "Demnächst verfügbar",
+    "nav.gta6.unlocked": "Früher Zugang freigeschaltet",
     "nav.gta5": "Grand Theft Auto V",
     "nav.login": "Konto",
     "nav.profile": "Mein Profil",

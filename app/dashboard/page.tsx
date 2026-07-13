@@ -192,7 +192,7 @@ function buildEnrichedPrompt(
 }
 
 /* ─── Types ─────────────────────────────────────────────── */
-type NavView = "create" | "history" | "referral" | "community" | "subscription" | "settings";
+type NavView = "create" | "gta6" | "history" | "referral" | "community" | "subscription" | "settings";
 type GenType = "create" | "video";
 type ObjectOption = "addObject" | "fullGeneration" | "replaceObject";
 
@@ -241,6 +241,7 @@ interface AdminScript {
 /* ─── Constants ─────────────────────────────────────────── */
 const NAV_ITEMS = [
   { id: "create"       as NavView, label: "Créer",        icon: Sparkles, desc: "Nouvelle génération"   },
+  { id: "gta6"         as NavView, label: "GTA 6",        icon: Film,     desc: "Réservé Ultimate"       },
   { id: "history"      as NavView, label: "Historique",   icon: History,  desc: "Mes images"            },
   { id: "referral"     as NavView, label: "Parrainage",   icon: Gift,     desc: "Gagne facilement"       },
   { id: "community"    as NavView, label: "Communauté",   icon: Users,    desc: "Réservé Ultimate"       },
@@ -254,6 +255,7 @@ const NAV_ITEMS = [
    bonne section. */
 const VIEW_PATHS: Record<NavView, string> = {
   create:       "/dashboard",
+  gta6:         "/gta6",
   history:      "/historique",
   referral:     "/parrainage",
   community:    "/communaute",
@@ -262,6 +264,7 @@ const VIEW_PATHS: Record<NavView, string> = {
 };
 const PATH_VIEWS: Record<string, NavView> = {
   "/dashboard":  "create",
+  "/gta6":       "gta6",
   "/historique": "history",
   "/parrainage": "referral",
   "/communaute": "community",
@@ -270,9 +273,21 @@ const PATH_VIEWS: Record<string, NavView> = {
 };
 
 const GEN_TABS: { id: GenType; label: string; icon: React.ElementType }[] = [
-  { id: "create",   label: "Grand Theft Auto V",  icon: Sparkles },
-  { id: "video",    label: "Grand Theft Auto VI", icon: Film     },
+  { id: "create",   label: "Génération Image", icon: Sparkles },
+  { id: "video",    label: "Génération Vidéo", icon: Film     },
 ];
+
+/* ─── Style exclusif GTA 6 (section réservée Ultimate) ────────────────────
+   Même moteur que la génération d'image du Dashboard, mais avec un prompt
+   dédié à l'univers de Grand Theft Auto VI (Vice City, Leonida, néons). */
+const GTA6_STYLE: Style = {
+  id: "gta6",
+  label: "GTA 6",
+  description: "Transformez-vous en personnage de GTA 6",
+  emoji: "🌴",
+  prompt: "transform the person in the photo into a Grand Theft Auto VI (GTA 6) character, Rockstar Games next-generation art style, ultra realistic modern game engine render, neon-soaked Vice City / Leonida atmosphere, tropical sunset with palm trees, cinematic lighting, keeping the person's facial features and likeness recognizable, extremely high detail, 8k",
+  tags: ["Jeu vidéo", "GTA 6"],
+};
 
 /* Une ligne "Inclus dans le plan" ; hl = mise en avant (couleur plus claire) :
    ce sont les meilleures différences de chaque formule par rapport aux autres. */
@@ -762,12 +777,18 @@ function DashboardContent() {
 
     const formData = new FormData();
 
-    if (genType === "create") {
+    // La section GTA 6 (réservée Ultimate) réutilise le moteur image du
+    // Dashboard, mais force le style dédié Grand Theft Auto VI.
+    const isGta6View = navView === "gta6";
+
+    if (genType === "create" || isGta6View) {
       if (!styleFile) { setError("Veuillez uploader une photo."); return; }
       // Toutes les générations partent en mode personnage GTA 5 : c'est ce qui
       // active le contexte de stylisation forte + le boost GTA 5 côté serveur
       // (l'ancienne description libre partait en simple retouche trop timide).
-      const effStyle = selectedStyle ?? STYLES.find(s => s.id === "gta5") ?? null;
+      const effStyle = isGta6View
+        ? GTA6_STYLE
+        : selectedStyle ?? STYLES.find(s => s.id === "gta5") ?? null;
       // Description libre : réservée à la formule Ultimate (double garde côté envoi).
       const extraDetails = userPlanTier(stats?.plan) === "elite" ? details.trim() : "";
       // GTA 5 Intégral : réservé Essentiel/Ultimate (le serveur re-vérifie + quota).
@@ -920,6 +941,12 @@ function DashboardContent() {
               className="text-[12px] font-medium tracking-wide gradient-text-orange-subtle hover:opacity-80 hover:scale-110 transition-all duration-300 whitespace-nowrap shrink-0 inline-block"
             >
               Générer
+            </button>
+            <button
+              onClick={() => changeView("gta6")}
+              className="text-[13px] font-semibold tracking-wide text-amber-400/90 hover:text-amber-300 hover:scale-110 transition-all duration-300 whitespace-nowrap shrink-0 inline-block"
+            >
+              GTA 6
             </button>
             <button
               onClick={() => changeView("history")}
@@ -1329,114 +1356,242 @@ function DashboardContent() {
                   </div>{/* end grid */}
                   </div>{/* end max-w-7xl */}
 
-                  {/* ── Overlay desktop (xl+) : affiché pendant la génération OU quand résultat prêt ── */}
-                  <AnimatePresence>
-                    {(isGenerating || resultUrl) && (
-                      <motion.div
-                        key="desktop-result-overlay"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        transition={{ duration: 0.22 }}
-                        className="hidden xl:flex fixed inset-0 z-[200] items-center justify-center p-10"
-                      >
-                        {/* Backdrop — clic ferme si résultat affiché */}
-                        <div
-                          className="absolute inset-0 bg-black/82 backdrop-blur-sm"
-                          onClick={resultUrl && !isGenerating ? () => { setResultUrl(null); setResultStyle(""); } : undefined}
-                        />
+                </motion.div>
+              )}
 
-                        {/* Carte résultat */}
-                        <motion.div
-                          initial={{ scale: 0.9, y: 28 }}
-                          animate={{ scale: 1, y: 0 }}
-                          exit={{ scale: 0.9, y: 28 }}
-                          transition={{ type: "spring", stiffness: 280, damping: 26 }}
-                          className="relative z-10 w-full max-w-2xl bg-surface border border-surface-border rounded-3xl overflow-hidden shadow-2xl"
+              {/* ══ GTA 6 VIEW (réservée Ultimate) — même structure que la
+                  section Créer du Dashboard, avec des textes dédiés à
+                  Grand Theft Auto VI ══ */}
+              {navView === "gta6" && (
+                <motion.div key="gta6" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
+
+                  {userPlanTier(stats?.plan) !== "elite" && userEmail !== "gnemmialex@gmail.com" ? (
+                    /* ── Accès verrouillé — réservé à la formule Ultimate ── */
+                    <div className="max-w-xl mx-auto pt-20 pb-16">
+                      <div className="card !bg-black/70 border-amber-400/25 px-8 py-12 text-center">
+                        <div className="w-16 h-16 rounded-2xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center mx-auto mb-5">
+                          <Lock className="w-8 h-8 text-amber-400" />
+                        </div>
+                        <h1 className="text-2xl sm:text-3xl font-black mb-2">Grand Theft Auto VI</h1>
+                        <p className="text-amber-400 text-xs font-bold uppercase tracking-widest mb-4">Exclusivité Ultimate 👑</p>
+                        <p className="text-white/50 text-sm leading-relaxed mb-7">
+                          L&apos;accès anticipé à l&apos;univers de GTA 6 — Vice City, néons et
+                          ambiance next-gen — est réservé aux membres Ultimate. Passez à la
+                          formule Ultimate pour transformer vos photos en personnages de
+                          GTA 6 avant tout le monde.
+                        </p>
+                        <button
+                          onClick={goToSubscription}
+                          className="btn-primary-orange inline-flex items-center gap-2 px-6 py-3 text-sm font-bold"
                         >
-                          {/* Header */}
-                          <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between">
-                            <h3 className="font-bold text-xl">
-                              {isGenerating ? "Génération en cours…" : "Résultat"}
-                            </h3>
-                            {resultUrl && !isGenerating && (
-                              <button
-                                onClick={() => { setResultUrl(null); setResultStyle(""); }}
-                                className="w-8 h-8 rounded-full bg-surface-hover flex items-center justify-center text-white/40 hover:text-white transition-colors"
-                              >✕</button>
-                            )}
-                          </div>
+                          <Crown className="w-4 h-4" />
+                          Passer à Ultimate
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      {/* ── En-tête — remplace les onglets de la section Créer ── */}
+                      <div className="pt-10 pb-6 flex flex-col items-center text-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/30 uppercase tracking-widest">
+                          <Crown className="w-3 h-3" />Exclusivité Ultimate
+                        </span>
+                        <h1 className="text-3xl font-black">Grand Theft Auto VI</h1>
+                        <p className="text-white/40 text-sm max-w-md">
+                          Accès anticipé : glissez-vous dans l&apos;univers de GTA 6 —
+                          direction Vice City, ses néons et son ambiance next-gen.
+                        </p>
+                      </div>
 
-                          {/* Corps — résultat */}
-                          {resultUrl && !isGenerating ? (
-                            <div>
-                              <div className="relative bg-surface-hover overflow-hidden" style={{ height: "60vh" }}>
-                                <Image src={resultUrl} alt={resultStyle || "Résultat"} fill className={`object-contain ${isPaid ? "" : "blur-2xl scale-110"}`} />
-                                {!isPaid && <LockedOverlay onUnlock={goToSubscription} />}
+                      {/* ── Formulaire — même disposition que la section Créer ── */}
+                      <div className="max-w-4xl mx-auto pb-10 px-2">
+                      <div className="grid grid-cols-1 gap-6">
+                      <div className="space-y-4">
+
+                      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        {/* Col gauche — upload */}
+                        <div className="lg:col-span-1">
+                          <AnimatedCard delay={0} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-4">
+                            <h2 className="font-semibold text-sm mb-3 flex items-center justify-between">
+                              <span>Votre photo</span>
+                              <StepBadge n={1} />
+                            </h2>
+                            <UploadBox
+                              onFileSelected={(f,p)=>{setStyleFile(f);setStylePreview(p);setError(null);}}
+                              onClear={()=>{setStyleFile(null);setStylePreview(null);}}
+                              preview={stylePreview}
+                              label="Votre photo (visage bien visible)"
+                            />
+                          </AnimatedCard>
+                        </div>
+
+                        {/* Col droite — description + options + générer */}
+                        <div className="lg:col-span-2 space-y-4">
+
+                          {/* Description libre — incluse avec Ultimate */}
+                          <AnimatedCard delay={0.08} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-3">
+                            <h2 className="font-semibold text-sm mb-1.5 flex items-center justify-between">
+                              <span className="flex items-center gap-2">
+                                Votre scène GTA 6
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border text-amber-400 border-amber-400/40 bg-amber-400/10">
+                                  Ultimate ✨
+                                </span>
+                              </span>
+                              <span className="text-white/30 text-[10px] font-normal">optionnel</span>
+                            </h2>
+                            <textarea
+                              value={details}
+                              onChange={e => setDetails(e.target.value)}
+                              placeholder="Décrivez votre scène façon GTA 6 : tenue, ambiance Vice City, néons, plage, attitude…"
+                              rows={2}
+                              maxLength={300}
+                              className="w-full bg-surface border border-surface-border rounded-xl px-3 py-2 text-white text-sm placeholder-white/20 focus:outline-none focus:border-amber-400/60 resize-none"
+                            />
+                          </AnimatedCard>
+
+                          {/* ── GTA 6 Intégral — toute l'image transformée ── */}
+                          <AnimatedCard delay={0.1} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-3">
+                            <label className="flex items-start gap-3 cursor-pointer group">
+                              <div className="relative mt-0.5 flex-shrink-0">
+                                <input
+                                  type="checkbox"
+                                  checked={fullScene}
+                                  onChange={(e) => setFullScene(e.target.checked)}
+                                  className="sr-only"
+                                />
+                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                                  fullScene
+                                    ? "bg-accent-orange border-accent-orange"
+                                    : "border-surface-border group-hover:border-accent-orange/50"
+                                }`}>
+                                  {fullScene && <span className="text-white text-xs">✓</span>}
+                                </div>
                               </div>
-                              <div className="p-6 flex items-center gap-4">
-                                <p className="text-white/50 text-sm flex-1 truncate">
-                                  {isPaid ? resultStyle : "Aperçu flouté — débloquez la HD avec une formule"}
+                              <div className="min-w-0">
+                                <p className="font-semibold text-sm flex items-center gap-2 flex-wrap">
+                                  GTA 6 Intégral
+                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border text-amber-400 border-amber-400/40 bg-amber-400/10">
+                                    Ultimate ✨
+                                  </span>
                                 </p>
-                                {isPaid ? (
+                                <p className="text-white/45 text-xs mt-0.5 leading-relaxed">
+                                  Toute l&apos;image bascule dans l&apos;univers de GTA 6 — le décor,
+                                  l&apos;ambiance et la personne, comme un vrai artwork next-gen de Vice City.
+                                </p>
+                                <p className="text-white/30 text-[10px] mt-1">
+                                  Votre formule Ultimate : jusqu&apos;à 35 générations Intégral par mois.
+                                </p>
+                              </div>
+                            </label>
+                          </AnimatedCard>
+
+                          <QualitySelector
+                            value={quality}
+                            onChange={setQuality}
+                            tier="elite"
+                            step={2}
+                            onLockedClick={() => {}}
+                          />
+
+                          <GenerateCard
+                            consent={consent}
+                            setConsent={setConsent}
+                            error={error}
+                            onGenerate={handleGenerate}
+                            onCancel={handleCancel}
+                            isGenerating={isGenerating}
+                            canGenerate={!!(styleFile && consent)}
+                            credits={100}
+                            step={3}
+                            plan={stats?.plan}
+                          />
+
+                          <PlanPerksCard tier="elite" onUpgrade={goToSubscription} />
+
+                        </div>
+                      </div>
+
+                      </div>{/* end forms col */}
+
+                      {/* ── Panneau résultat mobile/tablette — l'overlay plein
+                          écran prend le relais sur desktop (xl+) ── */}
+                      <div className="xl:hidden">
+                        <div className="sticky top-6 max-h-[calc(100vh-3.5rem)] overflow-y-auto rounded-2xl">
+                          <div className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl overflow-hidden">
+                            <div className="px-4 py-3 border-b border-surface-border flex items-center justify-between">
+                              <h3 className="font-semibold text-sm">Résultat</h3>
+                              {resultUrl && (
+                                <button
+                                  onClick={() => { setResultUrl(null); setResultStyle(""); }}
+                                  className="text-xs text-white/40 hover:text-white transition-colors"
+                                >
+                                  Effacer
+                                </button>
+                              )}
+                            </div>
+                            {resultUrl ? (
+                              <div>
+                                <div className="relative aspect-square bg-surface-hover overflow-hidden">
+                                  <Image src={resultUrl} alt={resultStyle || "GTA 6"} fill className="object-contain" />
+                                </div>
+                                <div className="p-4 space-y-3">
+                                  <p className="text-white/50 text-xs text-center">{resultStyle}</p>
                                   <button
                                     onClick={() => handleDownload(resultUrl, Date.now().toString())}
-                                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-orange hover:bg-accent-orange/80 text-white font-semibold transition-all text-sm whitespace-nowrap"
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-orange hover:bg-accent-orange/80 text-white text-sm font-semibold transition-all"
                                   >
-                                    <Download className="w-4 h-4" />Télécharger
+                                    <Download className="w-4 h-4" />
+                                    Télécharger
                                   </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="aspect-square flex flex-col items-center justify-center gap-3 text-center p-6">
+                                {isGenerating ? (
+                                  <>
+                                    <motion.div
+                                      animate={{ rotate: 360 }}
+                                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                                      className="w-12 h-12 rounded-full border-2 border-accent-orange/30 border-t-accent-orange"
+                                    />
+                                    <p className="text-white/50 text-sm font-medium">Génération en cours…</p>
+                                    <div className="w-full h-1.5 bg-surface-hover rounded-full overflow-hidden">
+                                      <motion.div
+                                        className="h-full gradient-bg-orange-animated rounded-full"
+                                        animate={{ width: `${genProgress}%` }}
+                                        transition={{ ease: "easeOut", duration: 0.4 }}
+                                      />
+                                    </div>
+                                    <p className="text-accent-orange text-xs font-bold">{Math.round(genProgress)}%</p>
+                                    <motion.button
+                                      onClick={handleCancel}
+                                      whileHover={{ scale: 1.04 }}
+                                      whileTap={{ scale: 0.96 }}
+                                      className="mt-1 flex items-center gap-1.5 px-4 py-1.5 rounded-xl border border-red-500/40 text-red-400 hover:bg-red-500/10 text-xs font-semibold transition-all"
+                                    >
+                                      <StopCircle className="w-3.5 h-3.5" />
+                                      Arrêter
+                                    </motion.button>
+                                  </>
                                 ) : (
-                                  <button
-                                    onClick={goToSubscription}
-                                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-orange hover:bg-accent-orange/80 text-white font-semibold transition-all text-sm whitespace-nowrap"
-                                  >
-                                    <Crown className="w-4 h-4" />Débloquer en HD
-                                  </button>
+                                  <>
+                                    <div className="w-16 h-16 rounded-2xl bg-surface-hover flex items-center justify-center">
+                                      <Film className="w-7 h-7 text-white/20" />
+                                    </div>
+                                    <p className="text-white/40 text-sm">Votre personnage GTA 6 apparaîtra ici</p>
+                                    <p className="text-white/20 text-xs">Uploadez une photo et appuyez sur Générer</p>
+                                  </>
                                 )}
                               </div>
-                            </div>
-                          ) : (
-                            /* Corps — chargement */
-                            <div className="flex flex-col items-center justify-center gap-6 py-16 px-8">
-                              <div className="relative w-24 h-24">
-                                <motion.div
-                                  animate={{ rotate: 360 }}
-                                  transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
-                                  className="absolute inset-0 rounded-full border-4 border-accent-orange/20 border-t-accent-orange"
-                                />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                  <Sparkles className="w-8 h-8 text-accent-orange/60" />
-                                </div>
-                              </div>
-                              <div className="text-center space-y-1.5">
-                                <p className="text-white/85 text-2xl font-black">Génération IA</p>
-                                <p className="text-white/40 text-sm">Votre image est en cours de création…</p>
-                              </div>
-                              <div className="w-80 space-y-2">
-                                <div className="h-2.5 bg-surface-hover rounded-full overflow-hidden">
-                                  <motion.div
-                                    className="h-full gradient-bg-orange-animated rounded-full"
-                                    animate={{ width: `${genProgress}%` }}
-                                    transition={{ ease: "easeOut", duration: 0.4 }}
-                                  />
-                                </div>
-                                <p className="text-center text-accent-orange font-bold text-xl">{Math.round(genProgress)}%</p>
-                              </div>
-                              <motion.button
-                                onClick={handleCancel}
-                                whileHover={{ scale: 1.03 }}
-                                whileTap={{ scale: 0.97 }}
-                                className="flex items-center gap-2 px-6 py-3 rounded-xl border border-red-500/40 text-red-400 hover:bg-red-500/10 font-semibold transition-all"
-                              >
-                                <StopCircle className="w-4 h-4" />
-                                Arrêter la génération
-                              </motion.button>
-                            </div>
-                          )}
-                        </motion.div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      </div>{/* end grid */}
+                      </div>{/* end max-w-4xl */}
+                    </>
+                  )}
                 </motion.div>
               )}
 
@@ -2177,6 +2332,116 @@ function DashboardContent() {
           </div>
         </div>
       </main>
+
+      {/* ── Overlay desktop (xl+) : affiché pendant la génération OU quand résultat
+          prêt — commun aux sections Créer et GTA 6 ── */}
+      <AnimatePresence>
+        {(isGenerating || resultUrl) && (
+          <motion.div
+            key="desktop-result-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.22 }}
+            className="hidden xl:flex fixed inset-0 z-[200] items-center justify-center p-10"
+          >
+            {/* Backdrop — clic ferme si résultat affiché */}
+            <div
+              className="absolute inset-0 bg-black/82 backdrop-blur-sm"
+              onClick={resultUrl && !isGenerating ? () => { setResultUrl(null); setResultStyle(""); } : undefined}
+            />
+
+            {/* Carte résultat */}
+            <motion.div
+              initial={{ scale: 0.9, y: 28 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 28 }}
+              transition={{ type: "spring", stiffness: 280, damping: 26 }}
+              className="relative z-10 w-full max-w-2xl bg-surface border border-surface-border rounded-3xl overflow-hidden shadow-2xl"
+            >
+              {/* Header */}
+              <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between">
+                <h3 className="font-bold text-xl">
+                  {isGenerating ? "Génération en cours…" : "Résultat"}
+                </h3>
+                {resultUrl && !isGenerating && (
+                  <button
+                    onClick={() => { setResultUrl(null); setResultStyle(""); }}
+                    className="w-8 h-8 rounded-full bg-surface-hover flex items-center justify-center text-white/40 hover:text-white transition-colors"
+                  >✕</button>
+                )}
+              </div>
+
+              {/* Corps — résultat */}
+              {resultUrl && !isGenerating ? (
+                <div>
+                  <div className="relative bg-surface-hover overflow-hidden" style={{ height: "60vh" }}>
+                    <Image src={resultUrl} alt={resultStyle || "Résultat"} fill className={`object-contain ${isPaid ? "" : "blur-2xl scale-110"}`} />
+                    {!isPaid && <LockedOverlay onUnlock={goToSubscription} />}
+                  </div>
+                  <div className="p-6 flex items-center gap-4">
+                    <p className="text-white/50 text-sm flex-1 truncate">
+                      {isPaid ? resultStyle : "Aperçu flouté — débloquez la HD avec une formule"}
+                    </p>
+                    {isPaid ? (
+                      <button
+                        onClick={() => handleDownload(resultUrl, Date.now().toString())}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-orange hover:bg-accent-orange/80 text-white font-semibold transition-all text-sm whitespace-nowrap"
+                      >
+                        <Download className="w-4 h-4" />Télécharger
+                      </button>
+                    ) : (
+                      <button
+                        onClick={goToSubscription}
+                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-orange hover:bg-accent-orange/80 text-white font-semibold transition-all text-sm whitespace-nowrap"
+                      >
+                        <Crown className="w-4 h-4" />Débloquer en HD
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                /* Corps — chargement */
+                <div className="flex flex-col items-center justify-center gap-6 py-16 px-8">
+                  <div className="relative w-24 h-24">
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+                      className="absolute inset-0 rounded-full border-4 border-accent-orange/20 border-t-accent-orange"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Sparkles className="w-8 h-8 text-accent-orange/60" />
+                    </div>
+                  </div>
+                  <div className="text-center space-y-1.5">
+                    <p className="text-white/85 text-2xl font-black">Génération IA</p>
+                    <p className="text-white/40 text-sm">Votre image est en cours de création…</p>
+                  </div>
+                  <div className="w-80 space-y-2">
+                    <div className="h-2.5 bg-surface-hover rounded-full overflow-hidden">
+                      <motion.div
+                        className="h-full gradient-bg-orange-animated rounded-full"
+                        animate={{ width: `${genProgress}%` }}
+                        transition={{ ease: "easeOut", duration: 0.4 }}
+                      />
+                    </div>
+                    <p className="text-center text-accent-orange font-bold text-xl">{Math.round(genProgress)}%</p>
+                  </div>
+                  <motion.button
+                    onClick={handleCancel}
+                    whileHover={{ scale: 1.03 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="flex items-center gap-2 px-6 py-3 rounded-xl border border-red-500/40 text-red-400 hover:bg-red-500/10 font-semibold transition-all"
+                  >
+                    <StopCircle className="w-4 h-4" />
+                    Arrêter la génération
+                  </motion.button>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <PaywallModal isOpen={showPaywall} onClose={()=>setShowPaywall(false)} reason="Crédits épuisés — Rechargez pour continuer" />
       <TrustNotification />
