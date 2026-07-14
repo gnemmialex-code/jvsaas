@@ -126,7 +126,11 @@ export const STYLE_MODELS: Img2ImgModelSpec[] = [GTA_STYLE_SPEC];
 export const GTA6_MODEL =
   process.env.REPLICATE_GTA6_MODEL || "black-forest-labs/flux-kontext-pro";
 
-export const GTA6_KONTEXT_PROMPT =
+// Le prompt est découpé en 3 blocs pour que le mode "fond exclusif" puisse
+// retirer ENTIÈREMENT la description du décor par défaut (baie, palmiers,
+// hélico…) : les modèles d'image suivent mal les négations — si les palmiers
+// restent décrits dans le prompt, ils réapparaissent à l'image.
+const GTA6_PROMPT_BEFORE_BACKGROUND =
   "Transform this photo into official Rockstar Games Grand Theft Auto VI key art illustration, " +
   "in the exact style of the GTA 6 announcement artwork. " +
   "RENDERING TECHNIQUE: completely flat 2D digital vector illustration, zero photorealism, " +
@@ -148,7 +152,9 @@ export const GTA6_KONTEXT_PROMPT =
   "hairstyle of the person in the photo. Confident relaxed pose, full body visible, wearing an " +
   "open short-sleeve tropical shirt with subtle tonal palm print over a plain white t-shirt, " +
   "cargo pants, sneakers, thin gold chain necklace and a wristwatch, all rendered in the same " +
-  "flat cel-shaded style. " +
+  "flat cel-shaded style. ";
+
+const GTA6_PROMPT_DEFAULT_BACKGROUND =
   "BACKGROUND, rendered paler, hazier and less saturated than the character so the figure " +
   "pops: Vice City waterfront at golden hour, milky turquoise-mint bay water with pale pink " +
   "ripple reflections painted as flat wavy shapes, lavender and periwinkle palm tree " +
@@ -156,7 +162,9 @@ export const GTA6_KONTEXT_PROMPT =
   "skyscrapers fading into a soft haze, cyan sky graduating to pale butter-yellow at the " +
   "horizon, a small purple police helicopter in the sky, a police speedboat cutting a white " +
   "foam wake, a wooden dock with mooring posts and rope in the foreground, a white pelican on " +
-  "a buoy, a distant concrete bridge. " +
+  "a buoy, a distant concrete bridge. ";
+
+const GTA6_PROMPT_AFTER_BACKGROUND =
   "COLOR PALETTE: dominant pastel Miami palette — turquoise, mint, lavender, periwinkle, " +
   "blush pink, peach, butter yellow — with the main character carrying the strongest " +
   "saturation in the frame. " +
@@ -164,15 +172,125 @@ export const GTA6_KONTEXT_PROMPT =
   "perfectly balanced composition, sharp at every scale, no blur, no noise, no gradient " +
   "banding, no photorealistic skin, no CGI, no soft airbrushed shading.";
 
+export const GTA6_KONTEXT_PROMPT =
+  GTA6_PROMPT_BEFORE_BACKGROUND + GTA6_PROMPT_DEFAULT_BACKGROUND + GTA6_PROMPT_AFTER_BACKGROUND;
+
 // Champ "Votre scène GTA 6" du dashboard : le texte libre de l'utilisateur
 // (traduit en anglais) est injecté en clause PRIORITAIRE à la fin du prompt
 // interne. Là où sa demande entre en conflit avec la scène par défaut (fond,
 // tenue, pose, objets…), c'est SA version qui remplace celle du prompt de
 // base ; tout ce qu'il ne mentionne pas garde la description par défaut.
 // Le style de rendu key art GTA VI et l'identité du visage, eux, ne bougent jamais.
+
+// Demande de fond EXCLUSIF ("uniquement la ville en fond", "seulement la ville
+// en arrière-plan", "juste la ville derrière moi", "rien que la ville"…) :
+// un mot d'exclusivité combiné à une référence au fond/décor. Dans ce cas le
+// décor Vice City par défaut est entièrement abandonné — le fond ne contient
+// QUE ce que l'utilisateur a écrit : pas d'eau, pas de soleil visible, pas de
+// palmiers ni de végétation, pas d'hélico/bateau/ponton/pélican/pont.
+const GTA6_EXCLUSIVE_WORDS_RE =
+  /\b(?:uniquement|seulement|juste|rien\s+que|que\s+la|que\s+le|que\s+les|only|just|nothing\s+but)\b/i;
+const GTA6_BACKGROUND_WORDS_RE =
+  /\b(?:fond|arri[eè]re[\s-]?plans?|d[ée]cors?|derri[eè]re|backgrounds?|backdrop)\b/i;
+
+function isExclusiveBackgroundRequest(rawScene: string): boolean {
+  return GTA6_EXCLUSIVE_WORDS_RE.test(rawScene) && GTA6_BACKGROUND_WORDS_RE.test(rawScene);
+}
+
+// Sujets de fond connus : si la demande exclusive en mentionne un, on injecte
+// une description concrète dans le style key art. Testé sur le texte FR brut
+// + sa traduction EN. AUCUNE description n'est injectée pour un sujet non
+// demandé (c'est ce qui faisait réapparaître la ville sur "uniquement la mer").
+const GTA6_EXCLUSIVE_SUBJECTS: Array<{ match: RegExp; desc: string }> = [
+  {
+    match: /\b(?:villes?|urbain|immeubles?|b[âa]timents?|gratte[\s-]?ciels?|city|cities|skyline|skyscrapers?|buildings?|urban)\b/i,
+    desc: "a dense city skyline — pale pink, peach, mint and powder-blue art deco towers and " +
+          "skyscrapers filling the entire frame edge to edge behind the character, under a " +
+          "plain hazy pastel sky",
+  },
+  {
+    match: /\b(?:mers?|oc[ée]ans?|seas?|oceans?)\b/i,
+    desc: "the open sea — milky turquoise-mint water with pale pink ripple reflections " +
+          "painted as flat wavy shapes, stretching unbroken to the horizon and meeting a " +
+          "plain hazy pastel sky, with no land, no coast and no buildings visible anywhere",
+  },
+  {
+    match: /\b(?:plages?|beach(?:es)?|sable|sand)\b/i,
+    desc: "a sandy beach — pale peach sand and milky turquoise-mint water painted as flat " +
+          "graphic shapes, under a plain hazy pastel sky",
+  },
+  {
+    match: /\b(?:for[êe]ts?|jungles?|forests?)\b/i,
+    desc: "a lush forest — lavender, mint and periwinkle tree silhouettes painted as flat " +
+          "layered shapes fading into a soft haze",
+  },
+  {
+    match: /\b(?:montagnes?|mountains?|d[ée]serts?)\b/i,
+    desc: "a wide landscape — flat graphic terrain shapes in the pastel palette fading into " +
+          "a soft haze under a plain hazy pastel sky",
+  },
+  {
+    match: /\b(?:ciels?|sky|nuages?|clouds?)\b/i,
+    desc: "only the open sky — a smooth pastel gradient with flat graphic cloud shapes, " +
+          "nothing else",
+  },
+];
+
+// Interdictions du fond exclusif : chacune saute si la demande de l'utilisateur
+// mentionne le sujet correspondant (testé sur le FR brut + la traduction EN).
+const GTA6_EXCLUSIVE_PROHIBITIONS: Array<{ text: string; allowIf: RegExp }> = [
+  { text: "no water, no sea, no coastline, no beach",
+    allowIf: /\b(?:mers?|oc[ée]ans?|eau|plages?|lacs?|rivi[eè]res?|seas?|oceans?|water|beach(?:es)?|lakes?|rivers?|bay)\b/i },
+  { text: "no buildings, no skyscrapers, no city skyline, no urban elements",
+    allowIf: /\b(?:villes?|immeubles?|b[âa]timents?|gratte[\s-]?ciels?|urbain|city|cities|buildings?|skylines?|skyscrapers?|urban|towers?|rues?|streets?)\b/i },
+  { text: "no vegetation of any kind",
+    allowIf: /\b(?:palmiers?|arbres?|plantes?|for[êe]ts?|jungles?|fleurs?|v[ée]g[ée]tation|herbe|jardins?|palm|trees?|plants?|forests?|flowers?|vegetation|grass|gardens?)\b/i },
+  { text: "no visible sun and no glowing disk in the sky",
+    allowIf: /\b(?:soleil|suns?|sunsets?|sunrises?|couchers?\s+de\s+soleil)\b/i },
+  { text: "no animals",
+    allowIf: /\b(?:animaux|animal|oiseaux?|chiens?|chats?|chevaux|cheval|animals?|birds?|dogs?|cats?|horses?)\b/i },
+  { text: "no aircraft",
+    allowIf: /\b(?:h[ée]licopt[eè]res?|avions?|helicopters?|planes?|aircraft|jets?)\b/i },
+  { text: "no boats",
+    allowIf: /\b(?:bateaux?|yachts?|voiliers?|boats?|ships?|jet[\s-]?skis?)\b/i },
+  { text: "no cars and no road vehicles",
+    allowIf: /\b(?:voitures?|motos?|v[ée]hicules?|camions?|cars?|motorcycles?|motorbikes?|vehicles?|trucks?)\b/i },
+  { text: "no extra people or characters",
+    allowIf: /\b(?:personnages?|personnes?|gens|foules?|people|crowds?|characters?)\b/i },
+];
+
 export function buildGta6Prompt(userScene?: string): string {
-  const scene = translateToEnglish((userScene ?? "").trim());
+  const rawScene = (userScene ?? "").trim();
+  const scene = translateToEnglish(rawScene);
   if (!scene) return GTA6_KONTEXT_PROMPT;
+
+  // Fond exclusif : le bloc décor Vice City est RETIRÉ du prompt (pas juste
+  // contredit) — la seule description de fond que voit le modèle est celle du
+  // sujet demandé par l'utilisateur, suivie des interdictions restantes.
+  if (isExclusiveBackgroundRequest(rawScene)) {
+    const haystack = rawScene + " " + scene;
+    const subjectDescs = GTA6_EXCLUSIVE_SUBJECTS
+      .filter((s) => s.match.test(haystack))
+      .map((s) => s.desc);
+    const prohibitions = GTA6_EXCLUSIVE_PROHIBITIONS
+      .filter((p) => !p.allowIf.test(haystack))
+      .map((p) => p.text);
+    return (
+      GTA6_PROMPT_BEFORE_BACKGROUND +
+      "BACKGROUND — STRICT AND EXCLUSIVE, rendered paler, hazier and less saturated than the " +
+      `character so the figure pops: exactly and only this — "${scene}". ` +
+      (subjectDescs.length > 0
+        ? "Concretely, the background is " + subjectDescs.join(", combined with ") +
+          ", in the same flat pastel key art style. "
+        : "") +
+      "The background contains NOTHING beyond what the request explicitly names: " +
+      [...prohibitions, "no additional props or scenery elements of any kind"].join(", ") +
+      ". The warm rim lighting on the " +
+      "character is kept, but the light source itself is never visible in the image. " +
+      GTA6_PROMPT_AFTER_BACKGROUND
+    );
+  }
+
   return (
     GTA6_KONTEXT_PROMPT +
     " USER SCENE REQUEST — HIGHEST PRIORITY, OVERRIDES THE DEFAULT SCENE ABOVE: " +
@@ -695,6 +813,8 @@ function translateToEnglish(text: string): string {
     [/fond\s+(?:de\s+)?bureau/gi, "office background"],
     [/fond\s+(?:de\s+)?luxe|fond\s+(?:de\s+)?villa/gi, "luxury villa background"],
     [/(?:change|remplace)\s+(?:le\s+)?fond/gi, "replace background with"],
+    [/\ben\s+(?:fond|arrière[\s-]?plan)\b/gi, "in the background"],
+    [/\ben\s+arriere[\s-]?plan\b/gi, "in the background"],
     [/\bfond\b/gi, "background"],
     [/à\s+la\s+plage/gi, "at the beach"],
     [/à\s+paris/gi, "in Paris"],
@@ -758,9 +878,19 @@ function translateToEnglish(text: string): string {
     [/améliore?\s+(?:la\s+)?qualité/gi, "improve image quality"],
     [/\buniquement\b/gi, "only"],
     [/\bseulement\b/gi, "only"],
-    [/\bplage\b/gi, "beach"],
-    [/\bmer\b/gi, "sea"],
-    [/\bville\b/gi, "city"],
+    [/\bplages?\b/gi, "beach"],
+    [/\bmers?\b/gi, "sea"],
+    [/\bvilles?\b/gi, "city"],
+    [/\bpalmiers?\b/gi, "palm trees"],
+    [/\barbres?\b/gi, "trees"],
+    [/\bmontagnes?\b/gi, "mountains"],
+    [/\bforêts?\b/gi, "forest"],
+    [/\bdéserts?\b/gi, "desert"],
+    [/\bciel\b/gi, "sky"],
+    [/\bsoleil\b/gi, "sun"],
+    [/\bocéans?\b/gi, "ocean"],
+    [/\bimmeubles?\b/gi, "buildings"],
+    [/\bgratte[\s-]?ciels?\b/gi, "skyscrapers"],
     [/\bnuit\b/gi, "night"],
     [/\bvoiture\b/gi, "car"],
     [/\bmoto\b/gi, "motorcycle"],
