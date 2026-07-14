@@ -75,7 +75,9 @@ export async function GET(req: NextRequest) {
   if (pred.status === "failed" || pred.status === "canceled") {
     const jobConfig = job.job_config as AsyncJobConfig;
 
-    if (jobConfig?.mode === "style") {
+    // La section /gta6 utilise son propre modèle (flux-kontext-pro) : pas de
+    // repli sur la chaîne de modèles style classique.
+    if (jobConfig?.mode === "style" && !jobConfig.gta6) {
       const nextIdx = (jobConfig.modelIndex ?? 0) + 1;
       if (nextIdx < STYLE_MODEL_COUNT) {
         console.log(`[Poll] Model [${jobConfig.modelIndex ?? 0}] failed — trying model [${nextIdx}]`);

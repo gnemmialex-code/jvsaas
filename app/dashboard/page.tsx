@@ -289,6 +289,14 @@ const GTA6_STYLE: Style = {
   tags: ["Jeu vidéo", "GTA 6"],
 };
 
+/* Taille de l'image générée (section GTA 6) — valeurs aspect_ratio Replicate. */
+const GTA6_ASPECTS = [
+  { id: "16:9", label: "Paysage",  box: "w-8 h-[18px]" },
+  { id: "9:16", label: "Portrait", box: "w-[18px] h-8" },
+  { id: "1:1",  label: "Carré",    box: "w-6 h-6"      },
+] as const;
+type Gta6Aspect = (typeof GTA6_ASPECTS)[number]["id"];
+
 /* Une ligne "Inclus dans le plan" ; hl = mise en avant (couleur plus claire) :
    ce sont les meilleures différences de chaque formule par rapport aux autres. */
 interface PlanFeature { text: string; hl?: boolean }
@@ -389,6 +397,7 @@ function DashboardContent() {
   const [accessory,     setAccessory]     = useState<string | null>(null);
   const [details,       setDetails]       = useState(""); // description libre — Ultimate uniquement
   const [fullScene,     setFullScene]     = useState(false); // GTA 5 Intégral — Essentiel/Ultimate
+  const [gta6Aspect,    setGta6Aspect]    = useState<Gta6Aspect>("9:16"); // taille image section GTA 6
 
 
   /* generation precision options */
@@ -792,10 +801,17 @@ function DashboardContent() {
       // Description libre : réservée à la formule Ultimate (double garde côté envoi).
       const extraDetails = userPlanTier(stats?.plan) === "elite" ? details.trim() : "";
       // GTA 5 Intégral : réservé Essentiel/Ultimate (le serveur re-vérifie + quota).
-      const wantsFullScene = fullScene && userPlanTier(stats?.plan) !== "essentiel";
+      // Jamais pour la vue GTA 6 : là-bas l'« intégral » est implicite — champ
+      // scène vide = artwork GTA 6 complet par défaut.
+      const wantsFullScene = !isGta6View && fullScene && userPlanTier(stats?.plan) !== "essentiel";
       // Le gel du fond est TOUJOURS appliqué (mode "Ne pas changer" par défaut) —
       // SAUF en mode GTA 5 Intégral, où tout le décor est justement transformé.
-      const customPrompt = [wantsFullScene ? "" : KEEP_BACKGROUND_PROMPT, extraDetails].filter(Boolean).join(", ");
+      // Vue GTA 6 : on n'envoie QUE la scène décrite par l'utilisateur — le
+      // prompt key art GTA VI (décor complet) est géré côté serveur, le gel du
+      // fond n'a pas de sens ici.
+      const customPrompt = isGta6View
+        ? extraDetails
+        : [wantsFullScene ? "" : KEEP_BACKGROUND_PROMPT, extraDetails].filter(Boolean).join(", ");
       const enriched = buildEnrichedPrompt(effStyle, clothing, mood, styleBg, accessory);
       formData.append("image", await resizeImageFile(styleFile));
       if (effStyle) {
@@ -806,6 +822,7 @@ function DashboardContent() {
       if (customPrompt)         formData.append("custom_prompt",   customPrompt);
       if (renderStyle)          formData.append("render_style",    renderStyle);
       if (wantsFullScene)       formData.append("full_scene",      "1");
+      if (isGta6View)           formData.append("aspect_ratio",    gta6Aspect);
       formData.append("intensity",       intensity);
       formData.append("output_format",   genFormat);
       formData.append("preserve_outfit", preserveOutfit ? "1" : "0");
@@ -1449,40 +1466,28 @@ function DashboardContent() {
                             />
                           </AnimatedCard>
 
-                          {/* ── GTA 6 Intégral — toute l'image transformée ── */}
+                          {/* ── Taille de l'image générée ── */}
                           <AnimatedCard delay={0.1} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-3">
-                            <label className="flex items-start gap-3 cursor-pointer group">
-                              <div className="relative mt-0.5 flex-shrink-0">
-                                <input
-                                  type="checkbox"
-                                  checked={fullScene}
-                                  onChange={(e) => setFullScene(e.target.checked)}
-                                  className="sr-only"
-                                />
-                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
-                                  fullScene
-                                    ? "bg-accent-orange border-accent-orange"
-                                    : "border-surface-border group-hover:border-accent-orange/50"
-                                }`}>
-                                  {fullScene && <span className="text-white text-xs">✓</span>}
-                                </div>
-                              </div>
-                              <div className="min-w-0">
-                                <p className="font-semibold text-sm flex items-center gap-2 flex-wrap">
-                                  GTA 6 Intégral
-                                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border text-amber-400 border-amber-400/40 bg-amber-400/10">
-                                    Ultimate ✨
-                                  </span>
-                                </p>
-                                <p className="text-white/45 text-xs mt-0.5 leading-relaxed">
-                                  Toute l&apos;image bascule dans l&apos;univers de GTA 6 — le décor,
-                                  l&apos;ambiance et la personne, comme un vrai artwork next-gen de Vice City.
-                                </p>
-                                <p className="text-white/30 text-[10px] mt-1">
-                                  Votre formule Ultimate : jusqu&apos;à 35 générations Intégral par mois.
-                                </p>
-                              </div>
-                            </label>
+                            <h2 className="font-semibold text-sm mb-2">Taille de l&apos;image</h2>
+                            <div className="grid grid-cols-3 gap-2">
+                              {GTA6_ASPECTS.map((a) => (
+                                <button
+                                  key={a.id}
+                                  type="button"
+                                  onClick={() => setGta6Aspect(a.id)}
+                                  className={`flex flex-col items-center gap-1.5 py-2.5 rounded-xl border transition-all ${
+                                    gta6Aspect === a.id
+                                      ? "border-amber-400/70 bg-amber-400/10 text-white"
+                                      : "border-surface-border bg-surface text-white/50 hover:border-amber-400/40 hover:text-white/80"
+                                  }`}
+                                >
+                                  <span className={`${a.box} rounded-[3px] border-2 ${
+                                    gta6Aspect === a.id ? "border-amber-400" : "border-white/30"
+                                  }`} />
+                                  <span className="text-xs font-semibold">{a.label}</span>
+                                </button>
+                              ))}
+                            </div>
                           </AnimatedCard>
 
                           <QualitySelector

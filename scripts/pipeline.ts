@@ -117,6 +117,76 @@ const GTA_STYLE_SPEC: Img2ImgModelSpec = {
 // Modèle unique : aucune chaîne de repli.
 export const STYLE_MODELS: Img2ImgModelSpec[] = [GTA_STYLE_SPEC];
 
+// ─── SECTION /gta6 : MODÈLE ET PROMPT DÉDIÉS ─────────────────────────────────
+// La partie générative GTA 6 (vue /gta6, styleId "gta6") n'utilise PAS le
+// fine-tune Flux LoRA ci-dessus : elle passe par flux-kontext-pro (édition
+// d'image guidée par texte, préserve l'identité du sujet), avec un prompt
+// interne FIXE qui décrit le style key art officiel du reveal GTA VI.
+// Aucun autre mode de génération n'est affecté.
+export const GTA6_MODEL =
+  process.env.REPLICATE_GTA6_MODEL || "black-forest-labs/flux-kontext-pro";
+
+export const GTA6_KONTEXT_PROMPT =
+  "Transform this photo into official Rockstar Games Grand Theft Auto VI key art illustration, " +
+  "in the exact style of the GTA 6 announcement artwork. " +
+  "RENDERING TECHNIQUE: completely flat 2D digital vector illustration, zero photorealism, " +
+  "zero 3D render, zero photographic texture or grain. Every surface is built from clean solid " +
+  "color planes with crisp hard edges. Cel-shading with sharply cut shadow shapes, shadows " +
+  "tinted lavender-purple and magenta instead of grey. Thin dark line art contouring figures " +
+  "and clothing folds, confident and clean, never sketchy. Skin rendered as large flat tone " +
+  "planes with 3-4 value steps maximum, subtle painterly transitions only inside the face. " +
+  "Body hair, stubble, eyebrows and flyaway hair strands drawn as hundreds of individual fine " +
+  "dark line strokes layered over the flat base colors. Eyelashes drawn individually. Clothing " +
+  "folds simplified into big angular graphic shapes with one hard shadow tone; fabric patterns " +
+  "(tropical prints, ripped denim, fur, jewelry chains) drawn crisp and graphic, every chain " +
+  "link and denim fray individually inked. " +
+  "LIGHTING: single warm golden-hour sun from the side, creating a bright yellow-cream rim " +
+  "light tracing shoulders, hair, arms and jawline with a hard edge. Lit skin areas warm " +
+  "peach-gold, shadow side of the face and body shifted to cool violet-pink. Slight warm glow " +
+  "halo separating the character from the cooler background. " +
+  "CHARACTER: preserve the exact facial likeness, identity, expression, skin tone and " +
+  "hairstyle of the person in the photo. Confident relaxed pose, full body visible, wearing an " +
+  "open short-sleeve tropical shirt with subtle tonal palm print over a plain white t-shirt, " +
+  "cargo pants, sneakers, thin gold chain necklace and a wristwatch, all rendered in the same " +
+  "flat cel-shaded style. " +
+  "BACKGROUND, rendered paler, hazier and less saturated than the character so the figure " +
+  "pops: Vice City waterfront at golden hour, milky turquoise-mint bay water with pale pink " +
+  "ripple reflections painted as flat wavy shapes, lavender and periwinkle palm tree " +
+  "silhouettes, distant skyline of pale pink, peach, mint and powder-blue art deco towers and " +
+  "skyscrapers fading into a soft haze, cyan sky graduating to pale butter-yellow at the " +
+  "horizon, a small purple police helicopter in the sky, a police speedboat cutting a white " +
+  "foam wake, a wooden dock with mooring posts and rope in the foreground, a white pelican on " +
+  "a buoy, a distant concrete bridge. " +
+  "COLOR PALETTE: dominant pastel Miami palette — turquoise, mint, lavender, periwinkle, " +
+  "blush pink, peach, butter yellow — with the main character carrying the strongest " +
+  "saturation in the frame. " +
+  "QUALITY: masterpiece AAA video game cover key art, ultra-clean vector poster finish, " +
+  "perfectly balanced composition, sharp at every scale, no blur, no noise, no gradient " +
+  "banding, no photorealistic skin, no CGI, no soft airbrushed shading.";
+
+// Champ "Votre scène GTA 6" du dashboard : le texte libre de l'utilisateur
+// (traduit en anglais) est injecté en clause PRIORITAIRE à la fin du prompt
+// interne. Là où sa demande entre en conflit avec la scène par défaut (fond,
+// tenue, pose, objets…), c'est SA version qui remplace celle du prompt de
+// base ; tout ce qu'il ne mentionne pas garde la description par défaut.
+// Le style de rendu key art GTA VI et l'identité du visage, eux, ne bougent jamais.
+export function buildGta6Prompt(userScene?: string): string {
+  const scene = translateToEnglish((userScene ?? "").trim());
+  if (!scene) return GTA6_KONTEXT_PROMPT;
+  return (
+    GTA6_KONTEXT_PROMPT +
+    " USER SCENE REQUEST — HIGHEST PRIORITY, OVERRIDES THE DEFAULT SCENE ABOVE: " +
+    `"${scene}". ` +
+    "Apply this request on top of everything described above. Wherever it conflicts with the " +
+    "default scene (background, setting, outfit, pose, props, mood, characters), the user " +
+    "request WINS and completely replaces that part of the default description. " +
+    "Every element the user request does not mention keeps the default description above. " +
+    "Non-negotiable regardless of the request: keep the exact flat 2D GTA VI key art " +
+    "illustration rendering style described above, keep the person's exact face, identity and " +
+    "expression from the photo, and keep the poster-quality balanced composition."
+  );
+}
+
 export const STYLE_MODEL_COUNT = STYLE_MODELS.length;
 
 // ─── Dimension table ──────────────────────────────────────────────────────────
@@ -182,6 +252,8 @@ export interface PipelineInput {
   /** Mode "GTA 5 Intégral" : toute l'image (décor compris) est transformée.
       Réservé Essentiel/Ultimate — change aussi les réglages du modèle IA. */
   fullScene?: boolean;
+  /** Taille de l'image générée (section GTA 6) : "16:9", "9:16" ou "1:1". */
+  aspectRatio?: string;
 }
 
 async function withRetry<T>(fn: () => Promise<T>, retries = 2): Promise<T> {
@@ -684,6 +756,14 @@ function translateToEnglish(text: string): string {
     [/sans\s+maquillage/gi, "no makeup"],
     [/haute\s+qualité|hd|4k|8k/gi, "ultra high definition"],
     [/améliore?\s+(?:la\s+)?qualité/gi, "improve image quality"],
+    [/\buniquement\b/gi, "only"],
+    [/\bseulement\b/gi, "only"],
+    [/\bplage\b/gi, "beach"],
+    [/\bmer\b/gi, "sea"],
+    [/\bville\b/gi, "city"],
+    [/\bnuit\b/gi, "night"],
+    [/\bvoiture\b/gi, "car"],
+    [/\bmoto\b/gi, "motorcycle"],
     [/\bavec\s+/gi, "with "],
     [/\bsur\s+/gi, "on "],
     [/\bdans\s+/gi, "in "],
@@ -765,6 +845,10 @@ export type AsyncJobConfig = {
   celebName?:         string;
   celebGender?:       string;
   fullScene?:         boolean;
+  /** Section /gta6 : génération via flux-kontext-pro + prompt interne GTA VI. */
+  gta6?:              boolean;
+  /** Section /gta6 : aspect_ratio Replicate ("16:9" / "9:16" / "1:1"). */
+  aspectRatio?:       string;
 };
 
 async function createPred(
@@ -827,6 +911,29 @@ export function buildAsyncJobConfig(
   const resolution   = qualityOverride?.resolution ?? baseResolution;
   const outputFormat = qualityOverride?.format     ?? qs.format;
 
+  // ── Section /gta6 UNIQUEMENT : flux-kontext-pro + prompt interne dédié ─────
+  // Le prompt construit ci-dessus (script maître, trigger LoRA, gel du fond…)
+  // est volontairement ignoré : la génération GTA 6 utilise le prompt key art
+  // GTA VI, adapté par le texte du champ "Votre scène GTA 6" s'il est rempli.
+  if (input.styleId === "gta6") {
+    // Taille choisie par l'utilisateur — seules les valeurs connues passent,
+    // sinon on garde le cadrage de la photo d'origine.
+    const GTA6_ALLOWED_ASPECTS = new Set(["16:9", "9:16", "1:1"]);
+    const aspectRatio = GTA6_ALLOWED_ASPECTS.has(input.aspectRatio ?? "")
+      ? input.aspectRatio
+      : undefined;
+    return {
+      mode:          "style",
+      qualityTier:   tier,
+      gta6:          true,
+      prompt:        buildGta6Prompt(input.customPrompt),
+      inputImageUrl: input.inputImageUrl,
+      outputFormat,
+      aspectRatio,
+      modelIndex:    0,
+    };
+  }
+
   return {
     mode:               "style",
     qualityTier:        tier,
@@ -855,6 +962,26 @@ export async function startAsyncJob(
     const p = await createPred(MODELS.faceSwap, {
       swap_image:  config.sourceB64!,
       input_image: targetB64!,
+    });
+    return p.id;
+  }
+
+  // ── Section /gta6 UNIQUEMENT : black-forest-labs/flux-kontext-pro ──────────
+  // Schéma d'entrée Kontext : prompt + input_image (pas de negative_prompt,
+  // pas de prompt_strength, pas de LoRA). aspect_ratio "match_input_image"
+  // conserve le cadrage de la photo envoyée.
+  if (config.gta6) {
+    if (!config.inputImageUrl) throw new Error("Image source manquante pour la génération");
+    const gta6Image = await loadImageAsBase64(config.inputImageUrl);
+    console.log(`[Pipeline] Section GTA 6 → ${GTA6_MODEL}`);
+    console.log(`[Pipeline] Prompt: "${(config.prompt ?? "").slice(0, 200)}"`);
+    const p = await createPred(GTA6_MODEL, {
+      prompt:            config.prompt ?? GTA6_KONTEXT_PROMPT,
+      input_image:       gta6Image,
+      aspect_ratio:      config.aspectRatio ?? "match_input_image",
+      output_format:     config.outputFormat === "png" ? "png" : "jpg",
+      safety_tolerance:  2,
+      prompt_upsampling: false,
     });
     return p.id;
   }

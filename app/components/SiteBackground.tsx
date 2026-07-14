@@ -36,6 +36,42 @@ const HERO_GALLERY_NEW_FILES = [
 // Pool complet des images de fond, réparti sur toutes les rangées.
 const ALL_BACKGROUND_IMAGES = [...HERO_GALLERY_FILES, ...HERO_GALLERY_NEW_FILES];
 
+// Images de /public/hero-gallery-gta6/ : utilisées UNIQUEMENT comme fond de la
+// page /gta6 (elles remplacent le pool ci-dessus sur cette page, et
+// n'apparaissent nulle part ailleurs).
+const HERO_GALLERY_GTA6_FILES = [
+  "gta6-ambrosia-03.jpg",
+  "gta6-boobie-ike-desktop.jpg",
+  "gta6-boobie-ike-landscape.jpg",
+  "gta6-brian-heder-04.jpg",
+  "gta6-brian-heder-desktop.jpg",
+  "gta6-brian-heder-landscape.jpg",
+  "gta6-cal-hampton-desktop.jpg",
+  "gta6-cal-hampton-landscape.jpg",
+  "gta6-drequan-priest-desktop.jpg",
+  "gta6-drequan-priest-landscape.jpg",
+  "gta6-grassrivers-01.jpg",
+  "gta6-jason-2-desktop.jpg",
+  "gta6-jason-and-lucia-1-landscape.jpg",
+  "gta6-jason-and-lucia-1-wide-desktop.jpg",
+  "gta6-jason-and-lucia-2-background-wide-desktop.jpg",
+  "gta6-jason-and-lucia-2-landscape.jpg",
+  "gta6-jason-and-lucia-2-side-desktop.jpg",
+  "gta6-jason-and-lucia-motel-landscape.jpg",
+  "gta6-jason-and-lucia-motel-ultrawide.jpg",
+  "gta6-jason-duval-02.jpg",
+  "gta6-lucia-2-desktop.jpg",
+  "gta6-port-gellhorn-02.jpg",
+  "gta6-raul-bautista-desktop.jpg",
+  "gta6-raul-bautista-landscape.jpg",
+  "gta6-real-dimez-desktop.jpg",
+  "gta6-real-dimez-landscape.jpg",
+  "gta6-trailer1-announcement-desktop.jpg",
+  "gta6-ultimate-edition-1.jpg",
+  "gta6-ultimate-edition-2.jpg",
+  "gta6-vice-city-04.jpg",
+].map((name) => `/hero-gallery-gta6/${name}`);
+
 // Défilement très lent sur toutes les pages.
 const SCROLL_DURATION_SEC = 480;
 
@@ -59,6 +95,7 @@ function splitIntoGroups<T>(arr: T[], n: number): T[][] {
 }
 
 const [DEFAULT_ROW1, DEFAULT_ROW2, DEFAULT_ROW3] = splitIntoGroups(ALL_BACKGROUND_IMAGES, 3);
+const [GTA6_ROW1, GTA6_ROW2, GTA6_ROW3] = splitIntoGroups(HERO_GALLERY_GTA6_FILES, 3);
 
 // Une rangée qui défile, avec un espace entre chaque image.
 function ImageRow({
@@ -118,19 +155,22 @@ export default function SiteBackground() {
   const enableScrollDarken = pathname === "/";
   // Page "Se connecter" : fond opaque et flouté, défilement bien plus lent.
   const isLogin = pathname === "/login";
-  const [row1, setRow1] = useState(DEFAULT_ROW1);
-  const [row2, setRow2] = useState(DEFAULT_ROW2);
-  const [row3, setRow3] = useState(DEFAULT_ROW3);
+  // Sur /gta6 (et ses sous-pages), le fond n'affiche QUE les images de
+  // /public/hero-gallery-gta6 ; partout ailleurs, le pool habituel.
+  const isGta6 = pathname?.startsWith("/gta6") ?? false;
+  const [row1, setRow1] = useState(isGta6 ? GTA6_ROW1 : DEFAULT_ROW1);
+  const [row2, setRow2] = useState(isGta6 ? GTA6_ROW2 : DEFAULT_ROW2);
+  const [row3, setRow3] = useState(isGta6 ? GTA6_ROW3 : DEFAULT_ROW3);
 
   // Réordonne aléatoirement à chaque chargement de page (après le rendu
   // serveur, pour ne jamais désynchroniser le HTML serveur/client). Chaque
   // rangée ne mélange que son propre groupe disjoint, donc une image ne peut
   // jamais se retrouver dans deux rangées à la fois.
   useEffect(() => {
-    setRow1(shuffle(DEFAULT_ROW1));
-    setRow2(shuffle(DEFAULT_ROW2));
-    setRow3(shuffle(DEFAULT_ROW3));
-  }, []);
+    setRow1(shuffle(isGta6 ? GTA6_ROW1 : DEFAULT_ROW1));
+    setRow2(shuffle(isGta6 ? GTA6_ROW2 : DEFAULT_ROW2));
+    setRow3(shuffle(isGta6 ? GTA6_ROW3 : DEFAULT_ROW3));
+  }, [isGta6]);
 
   // Plus on descend dans la page, plus le fond devient flou et sombre —
   // au plus bas (ex. la FAQ), il est totalement flouté et assombri.

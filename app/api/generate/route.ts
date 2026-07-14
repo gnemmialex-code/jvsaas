@@ -187,6 +187,8 @@ export async function POST(req: NextRequest) {
       const rawStylePrompt = formData.get("style_prompt") as string | null;
       const customPrompt   = (formData.get("custom_prompt") as string) ?? "";
       const fullScene      = (formData.get("full_scene") as string | null) === "1";
+      // Taille d'image choisie (section GTA 6) — whitelist re-validée dans le pipeline.
+      const aspectRatio    = (formData.get("aspect_ratio") as string | null) ?? undefined;
       styleLabel           = (formData.get("style_label") as string) ?? "Génération IA";
 
       if (!imageFile) {
@@ -275,6 +277,8 @@ export async function POST(req: NextRequest) {
         masterScriptEnabled: await isMasterScriptEnabled(),
         // Mode GTA 5 Intégral : toute l'image stylisée + réglages IA dédiés
         fullScene,
+        // Taille d'image (section GTA 6 uniquement)
+        aspectRatio,
       };
 
       jobConfig    = buildAsyncJobConfig(pipelineInput, sourceB64);
