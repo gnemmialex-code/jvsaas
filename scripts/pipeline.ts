@@ -149,10 +149,12 @@ const GTA6_PROMPT_BEFORE_BACKGROUND =
   "peach-gold, shadow side of the face and body shifted to cool violet-pink. Slight warm glow " +
   "halo separating the character from the cooler background. " +
   "CHARACTER: preserve the exact facial likeness, identity, expression, skin tone and " +
-  "hairstyle of the person in the photo. Confident relaxed pose, full body visible, wearing an " +
-  "open short-sleeve tropical shirt with subtle tonal palm print over a plain white t-shirt, " +
-  "cargo pants, sneakers, thin gold chain necklace and a wristwatch, all rendered in the same " +
-  "flat cel-shaded style. ";
+  "hairstyle of the person in the photo. Keep the person's pose from the photo, full body " +
+  "visible. CLOTHING — DO NOT CHANGE: keep the person wearing the exact same clothing and outfit " +
+  "as in the original photo — same garments, same cut, same colors, same patterns, same shoes " +
+  "and same accessories. Do not add, remove, replace, restyle, recolor or invent any piece of " +
+  "clothing; simply re-render the person's existing outfit in the same flat cel-shaded GTA VI " +
+  "key art style. ";
 
 const GTA6_PROMPT_DEFAULT_BACKGROUND =
   "BACKGROUND, rendered paler, hazier and less saturated than the character so the figure " +
