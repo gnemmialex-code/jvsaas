@@ -8,6 +8,7 @@ import {
   Settings, LogOut, Trash2,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useI18n } from "@/lib/i18n";
 
 type Plan = "free" | "essentiel" | "pro" | "ultra";
 
@@ -29,11 +30,11 @@ const PLAN_COLORS: Record<string, string> = {
   ultra: "text-yellow-400 bg-yellow-400/10 border-yellow-400/30",
 };
 
-const PLAN_LABELS: Record<string, string> = {
-  free: "Gratuit", essentiel: "Essentiel", pro: "Pro", ultra: "Ultra",
-};
-
 export default function AdminPage() {
+  const { t } = useI18n();
+  const PLAN_LABELS: Record<string, string> = {
+    free: t("dash.set.free"), essentiel: "Essentiel", pro: "Pro", ultra: "Ultra",
+  };
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -60,7 +61,7 @@ export default function AdminPage() {
       setUsers(list);
     } else {
       const err = await res.json().catch(() => ({}));
-      toast.error(`Erreur ${res.status} : ${err.error ?? "Accès refusé"}`);
+      toast.error(`${t("admin.error")} ${res.status} : ${err.error ?? t("admin.denied")}`);
     }
     setLoading(false);
     return list;
@@ -75,7 +76,7 @@ export default function AdminPage() {
     });
     setSaving(false);
     if (res.ok) {
-      toast.success("Sauvegardé !");
+      toast.success(t("admin.saved"));
       const fresh = await fetchUsers();
       const updated = fresh.find(u => u.id === userId);
       if (updated) {
@@ -84,7 +85,7 @@ export default function AdminPage() {
       }
     } else {
       const err = await res.json().catch(() => ({}));
-      toast.error(err.error ?? "Erreur lors de la sauvegarde");
+      toast.error(err.error ?? t("admin.saveError"));
     }
   };
 
@@ -107,13 +108,13 @@ export default function AdminPage() {
     });
     setSaving(false);
     if (res.ok) {
-      toast.success("Utilisateur supprimé définitivement");
+      toast.success(t("admin.userDeleted"));
       setSelectedUser(null);
       setConfirmDelete(false);
       await fetchUsers();
     } else {
       const err = await res.json().catch(() => ({}));
-      toast.error(err.error ?? "Erreur lors de la suppression");
+      toast.error(err.error ?? t("dash.toast.deleteError"));
     }
   };
 
@@ -147,7 +148,7 @@ export default function AdminPage() {
           </div>
           <a href="/" className="flex items-center gap-2 text-white/50 hover:text-white text-sm transition-colors">
             <LogOut className="w-4 h-4" />
-            Retour au site
+            {t("admin.backToSite")}
           </a>
         </div>
       </div>
@@ -156,10 +157,10 @@ export default function AdminPage() {
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: "Utilisateurs", value: users.length, icon: <Users className="w-5 h-5" />, color: "text-blue-400" },
-            { label: "Abonnés payants", value: proUsers, icon: <Crown className="w-5 h-5" />, color: "text-yellow-400" },
-            { label: "Crédits distribués", value: totalCredits.toLocaleString(), icon: <Zap className="w-5 h-5" />, color: "text-accent-violet" },
-            { label: "Bannis", value: users.filter(u => u.is_banned).length, icon: <Ban className="w-5 h-5" />, color: "text-red-400" },
+            { label: t("admin.users"), value: users.length, icon: <Users className="w-5 h-5" />, color: "text-blue-400" },
+            { label: t("admin.paidSubs"), value: proUsers, icon: <Crown className="w-5 h-5" />, color: "text-yellow-400" },
+            { label: t("admin.creditsGiven"), value: totalCredits.toLocaleString(), icon: <Zap className="w-5 h-5" />, color: "text-accent-violet" },
+            { label: t("admin.banned"), value: users.filter(u => u.is_banned).length, icon: <Ban className="w-5 h-5" />, color: "text-red-400" },
           ].map((stat) => (
             <div key={stat.label} className="card border-surface-border">
               <div className={`${stat.color} mb-2`}>{stat.icon}</div>
@@ -172,32 +173,32 @@ export default function AdminPage() {
         {/* Tableau */}
         <div className="card border-surface-border">
           <div className="flex items-center gap-4 mb-6">
-            <h2 className="font-bold text-lg flex-1">Utilisateurs</h2>
+            <h2 className="font-bold text-lg flex-1">{t("admin.users")}</h2>
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
               <input
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Rechercher un email..."
+                placeholder={t("admin.searchEmail")}
                 className="pl-9 pr-4 py-2 bg-surface border border-surface-border rounded-xl text-sm text-white placeholder-white/30 focus:outline-none focus:border-accent-violet/60 w-64"
               />
             </div>
           </div>
 
           {loading ? (
-            <div className="text-center py-16 text-white/30">Chargement...</div>
+            <div className="text-center py-16 text-white/30">{t("admin.loading")}</div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-surface-border">
                     {[
-                      { key: "email", label: "Email" },
-                      { key: "plan", label: "Plan" },
-                      { key: "credits", label: "Crédits" },
-                      { key: "created_at", label: "Inscription" },
-                      { key: "is_banned", label: "Statut" },
+                      { key: "email", label: t("login.email") },
+                      { key: "plan", label: t("admin.plan") },
+                      { key: "credits", label: t("pricing.credits") },
+                      { key: "created_at", label: t("admin.signup") },
+                      { key: "is_banned", label: t("admin.status") },
                     ].map(col => (
                       <th
                         key={col.key}
@@ -212,7 +213,7 @@ export default function AdminPage() {
                         </span>
                       </th>
                     ))}
-                    <th className="text-left py-3 px-4 text-white/40 font-medium">Action</th>
+                    <th className="text-left py-3 px-4 text-white/40 font-medium">{t("admin.action")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -228,12 +229,12 @@ export default function AdminPage() {
                         <span className="text-accent-violet font-semibold">{u.credits?.toLocaleString()}</span>
                       </td>
                       <td className="py-3 px-4 text-white/50">
-                        {new Date(u.created_at).toLocaleDateString("fr-FR")}
+                        {new Date(u.created_at).toLocaleDateString(undefined)}
                       </td>
                       <td className="py-3 px-4">
                         {u.is_banned
-                          ? <span className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 px-2 py-1 rounded-full">Banni</span>
-                          : <span className="text-xs text-green-400 bg-green-400/10 border border-green-400/30 px-2 py-1 rounded-full">Actif</span>
+                          ? <span className="text-xs text-red-400 bg-red-400/10 border border-red-400/30 px-2 py-1 rounded-full">{t("admin.bannedStatus")}</span>
+                          : <span className="text-xs text-green-400 bg-green-400/10 border border-green-400/30 px-2 py-1 rounded-full">{t("admin.activeStatus")}</span>
                         }
                       </td>
                       <td className="py-3 px-4">
@@ -241,7 +242,7 @@ export default function AdminPage() {
                           onClick={() => openUser(u)}
                           className="text-xs text-accent-violet border border-accent-violet/30 px-3 py-1.5 rounded-lg hover:bg-accent-violet/10 transition-colors"
                         >
-                          Gérer
+                          {t("admin.manage")}
                         </button>
                       </td>
                     </tr>
@@ -249,7 +250,7 @@ export default function AdminPage() {
                 </tbody>
               </table>
               {filtered.length === 0 && (
-                <div className="text-center py-12 text-white/30">Aucun utilisateur trouvé</div>
+                <div className="text-center py-12 text-white/30">{t("admin.noUsers")}</div>
               )}
             </div>
           )}
@@ -276,7 +277,7 @@ export default function AdminPage() {
                 <div>
                   <h3 className="font-bold text-lg">{selectedUser.email}</h3>
                   <p className="text-white/40 text-sm">
-                    Inscrit le {new Date(selectedUser.created_at).toLocaleDateString("fr-FR")}
+{t("admin.signedUpOn")} {new Date(selectedUser.created_at).toLocaleDateString(undefined)}
                   </p>
                 </div>
                 <button onClick={() => setSelectedUser(null)} className="text-white/40 hover:text-white">
@@ -287,7 +288,7 @@ export default function AdminPage() {
               <div className="space-y-5">
                 {/* Plan */}
                 <div>
-                  <label className="block text-sm font-medium text-white/70 mb-2">Plan</label>
+                  <label className="block text-sm font-medium text-white/70 mb-2">{t("admin.plan")}</label>
                   <div className="flex gap-2 flex-wrap">
                     {(["free", "essentiel", "pro", "ultra"] as Plan[]).map(p => (
                       <button
@@ -306,14 +307,14 @@ export default function AdminPage() {
                     disabled={saving}
                     className="mt-2 btn-primary text-sm px-4 py-2 flex items-center gap-1"
                   >
-                    <Check className="w-3.5 h-3.5" /> Appliquer le plan
+                    <Check className="w-3.5 h-3.5" /> {t("admin.applyPlan")}
                   </button>
                 </div>
 
                 {/* Crédits actuels */}
                 <div>
                   <label className="block text-sm font-medium text-white/70 mb-2">
-                    Crédits actuels — <span className="text-accent-violet font-bold">{selectedUser.credits?.toLocaleString()}</span>
+                    {t("admin.currentCredits")} <span className="text-accent-violet font-bold">{selectedUser.credits?.toLocaleString()}</span>
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -321,21 +322,21 @@ export default function AdminPage() {
                       value={editCredits}
                       onChange={e => setEditCredits(e.target.value)}
                       className="input-field flex-1 text-sm py-2"
-                      placeholder="Nouveau total"
+                      placeholder={t("admin.newTotal")}
                     />
                     <button
                       onClick={() => callAction(selectedUser.id, "set_credits", editCredits)}
                       disabled={saving}
                       className="btn-secondary text-sm px-4 py-2 whitespace-nowrap"
                     >
-                      Définir
+                      {t("admin.set")}
                     </button>
                   </div>
                 </div>
 
                 {/* Ajouter des crédits */}
                 <div>
-                  <label className="block text-sm font-medium text-white/70 mb-2">Ajouter des crédits</label>
+                  <label className="block text-sm font-medium text-white/70 mb-2">{t("admin.addCredits")}</label>
                   <div className="flex gap-2">
                     <input
                       type="number"
@@ -349,19 +350,19 @@ export default function AdminPage() {
                       disabled={saving || !addCreditsVal}
                       className="btn-primary text-sm px-4 py-2 flex items-center gap-1 whitespace-nowrap"
                     >
-                      <PlusCircle className="w-3.5 h-3.5" /> Ajouter
+                      <PlusCircle className="w-3.5 h-3.5" /> {t("admin.add")}
                     </button>
                   </div>
                 </div>
 
                 {/* Notes */}
                 <div>
-                  <label className="block text-sm font-medium text-white/70 mb-2">Notes internes</label>
+                  <label className="block text-sm font-medium text-white/70 mb-2">{t("admin.internalNotes")}</label>
                   <textarea
                     value={editNotes}
                     onChange={e => setEditNotes(e.target.value)}
                     rows={3}
-                    placeholder="Notes visibles uniquement par toi..."
+                    placeholder={t("admin.notesPlaceholder")}
                     className="input-field text-sm resize-none"
                   />
                   <button
@@ -369,7 +370,7 @@ export default function AdminPage() {
                     disabled={saving}
                     className="mt-2 btn-secondary text-sm px-4 py-2"
                   >
-                    Sauvegarder les notes
+                    {t("admin.saveNotes")}
                   </button>
                 </div>
 
@@ -385,7 +386,7 @@ export default function AdminPage() {
                     }`}
                   >
                     <Ban className="w-4 h-4 inline mr-2" />
-                    {selectedUser.is_banned ? "Débannir l'utilisateur" : "Bannir l'utilisateur"}
+                    {selectedUser.is_banned ? t("admin.unban") : t("admin.ban")}
                   </button>
 
                   {/* Supprimer définitivement — confirmation en 2 temps */}
@@ -396,13 +397,12 @@ export default function AdminPage() {
                       className="w-full py-2.5 rounded-xl text-sm font-semibold bg-red-500/15 border border-red-500 text-red-400 hover:bg-red-500/30 hover:text-white transition-all"
                     >
                       <Trash2 className="w-4 h-4 inline mr-2" />
-                      Supprimer l&apos;utilisateur
+                      {t("admin.deleteUser")}
                     </button>
                   ) : (
                     <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 space-y-2">
                       <p className="text-red-400 text-xs font-medium leading-relaxed">
-                        Suppression définitive de <strong>{selectedUser.email}</strong> : compte,
-                        générations et historique de crédits. Irréversible.
+                        {t("admin.deleteWarn1")} <strong>{selectedUser.email}</strong> {t("admin.deleteWarn2")}
                       </p>
                       <div className="flex items-center gap-2">
                         <button
@@ -410,14 +410,14 @@ export default function AdminPage() {
                           disabled={saving}
                           className="px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition-all disabled:opacity-50"
                         >
-                          {saving ? "…" : "Confirmer la suppression"}
+                          {saving ? "…" : t("admin.confirmDelete")}
                         </button>
                         <button
                           onClick={() => setConfirmDelete(false)}
                           disabled={saving}
                           className="px-3 py-1.5 rounded-lg border border-surface-border text-white/50 hover:text-white text-xs transition-all"
                         >
-                          Annuler
+                          {t("dash.hist.cancel")}
                         </button>
                       </div>
                     </div>
