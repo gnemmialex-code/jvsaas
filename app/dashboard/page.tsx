@@ -13,6 +13,7 @@ import {
   Gift, Copy, LogIn, UserPlus, Users, Loader2, ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useI18n } from "@/lib/i18n";
 import { isPaidPlan } from "@/lib/plan";
 import { resizeImageFile } from "@/lib/resize-image";
 import Navbar from "../components/Navbar";
@@ -137,39 +138,41 @@ function isQualityUnlocked(q: QualityLevel, tier: "essentiel" | "pro" | "elite")
 /* ─── Grosses spécificités débloquées par formule (affichées dans le panneau Créer)
    Chaque palier débloque des accès majeurs, bien visibles, exclusifs à la
    formule Essentiel ou à la formule Ultimate. */
-const PLAN_PERKS: Record<"essentiel" | "pro" | "elite", { label: string; on: boolean }[]> = {
-  essentiel: [
-    { label: "Qualité HD 1080p",                          on: true  },
-    { label: "1 image à la fois",                         on: true  },
-    { label: "Sans filigrane",                            on: false },
-    { label: "GTA 5 Intégral (toute l'image)",            on: false },
-    { label: "Génération vidéo IA (GTA VI)",              on: false },
-    { label: "Jusqu'à 4 images d'un coup",                on: false },
-    { label: "Description libre du rendu",                on: false },
-    { label: "File prioritaire — rendu 2× plus rapide",   on: false },
-  ],
-  pro: [
-    { label: "Qualité 4K ultra-nette",                    on: true  },
-    { label: "Sans filigrane",                            on: true  },
-    { label: "GTA 5 Intégral — 3 générations/mois",       on: true  },
-    { label: "Génération vidéo IA (GTA VI)",              on: true  },
-    { label: "Jusqu'à 4 images d'un coup",                on: true  },
-    { label: "Description libre du rendu",                on: false },
-    { label: "File prioritaire — rendu 2× plus rapide",   on: false },
-    { label: "Upscale 8K + accès anticipé aux nouveautés", on: false },
-  ],
-  elite: [
-    { label: "Qualité Ultra 8K photoréaliste",            on: true  },
-    { label: "Générations illimitées",                    on: true  },
-    { label: "GTA 5 Intégral — 35 générations/mois",      on: true  },
-    { label: "Description libre du rendu",                on: true  },
-    { label: "Sans filigrane",                            on: true  },
-    { label: "Vidéo IA + upscale 8K illimités",           on: true  },
-    { label: "File prioritaire — rendu 2× plus rapide",   on: true  },
-    { label: "Accès anticipé aux nouveautés (GTA VI)",    on: true  },
-    { label: "Manager dédié + support VIP",               on: true  },
-  ],
-};
+function buildPlanPerks(t: (k: string) => string): Record<"essentiel" | "pro" | "elite", { label: string; on: boolean }[]> {
+  return {
+    essentiel: [
+      { label: t("dash.perk.hd1080"),          on: true  },
+      { label: t("dash.perk.oneAtATime"),      on: true  },
+      { label: t("dash.perk.noWatermark"),     on: false },
+      { label: t("dash.perk.gta5Full"),        on: false },
+      { label: t("dash.perk.aiVideo"),         on: false },
+      { label: t("dash.perk.upTo4"),           on: false },
+      { label: t("dash.perk.freePrompt"),      on: false },
+      { label: t("dash.perk.priorityQueue"),   on: false },
+    ],
+    pro: [
+      { label: t("dash.perk.4kSharp"),         on: true  },
+      { label: t("dash.perk.noWatermark"),     on: true  },
+      { label: t("dash.perk.gta5Full3"),       on: true  },
+      { label: t("dash.perk.aiVideo"),         on: true  },
+      { label: t("dash.perk.upTo4"),           on: true  },
+      { label: t("dash.perk.freePrompt"),      on: false },
+      { label: t("dash.perk.priorityQueue"),   on: false },
+      { label: t("dash.perk.upscale8kEarly"),  on: false },
+    ],
+    elite: [
+      { label: t("dash.perk.ultra8k"),         on: true  },
+      { label: t("dash.perk.unlimited"),       on: true  },
+      { label: t("dash.perk.gta5Full35"),      on: true  },
+      { label: t("dash.perk.freePrompt"),      on: true  },
+      { label: t("dash.perk.noWatermark"),     on: true  },
+      { label: t("dash.perk.aiVideoUpscale"),  on: true  },
+      { label: t("dash.perk.priorityQueue"),   on: true  },
+      { label: t("dash.perk.earlyGta6"),       on: true  },
+      { label: t("dash.perk.dedicatedVip"),    on: true  },
+    ],
+  };
+}
 
 function buildEnrichedPrompt(
   style: Style | null,
@@ -239,15 +242,17 @@ interface AdminScript {
 }
 
 /* ─── Constants ─────────────────────────────────────────── */
-const NAV_ITEMS = [
-  { id: "create"       as NavView, label: "Créer",        icon: Sparkles, desc: "Nouvelle génération"   },
-  { id: "gta6"         as NavView, label: "GTA 6",        icon: Film,     desc: "Réservé Ultimate"       },
-  { id: "history"      as NavView, label: "Historique",   icon: History,  desc: "Mes images"            },
-  { id: "referral"     as NavView, label: "Parrainage",   icon: Gift,     desc: "Gagne facilement"       },
-  { id: "community"    as NavView, label: "Communauté",   icon: Users,    desc: "Réservé Ultimate"       },
-  { id: "subscription" as NavView, label: "Abonnement",   icon: Crown,    desc: "Offre spéciale !"       },
-  { id: "settings"     as NavView, label: "Paramètres",   icon: Settings, desc: "Mon compte"            },
-];
+function buildNavItems(t: (k: string) => string) {
+  return [
+    { id: "create"       as NavView, label: t("dash.nav.create"),       icon: Sparkles, desc: t("dash.nav.create.desc")   },
+    { id: "gta6"         as NavView, label: t("dash.nav.gta6"),         icon: Film,     desc: t("dash.nav.reservedUlt")  },
+    { id: "history"      as NavView, label: t("dash.nav.history"),      icon: History,  desc: t("dash.nav.history.desc") },
+    { id: "referral"     as NavView, label: t("dash.nav.referral"),     icon: Gift,     desc: t("dash.nav.referral.desc") },
+    { id: "community"    as NavView, label: t("dash.nav.community"),    icon: Users,    desc: t("dash.nav.reservedUlt")  },
+    { id: "subscription" as NavView, label: t("dash.nav.subscription"), icon: Crown,    desc: t("dash.nav.subscription.desc") },
+    { id: "settings"     as NavView, label: t("dash.nav.settings"),     icon: Settings, desc: t("dash.nav.settings.desc") },
+  ];
+}
 
 /* Chaque section du Dashboard possède sa propre URL : naviguer entre les
    onglets met à jour l'adresse (sans recharger la page), et charger
@@ -272,10 +277,12 @@ const PATH_VIEWS: Record<string, NavView> = {
   "/profil":     "settings",
 };
 
-const GEN_TABS: { id: GenType; label: string; icon: React.ElementType }[] = [
-  { id: "create",   label: "Génération Image", icon: Sparkles },
-  { id: "video",    label: "Génération Vidéo", icon: Film     },
-];
+function buildGenTabs(t: (k: string) => string): { id: GenType; label: string; icon: React.ElementType }[] {
+  return [
+    { id: "create",   label: t("dash.gentab.image"), icon: Sparkles },
+    { id: "video",    label: t("dash.gentab.video"), icon: Film     },
+  ];
+}
 
 /* ─── Style exclusif GTA 6 (section réservée Ultimate) ────────────────────
    Même moteur que la génération d'image du Dashboard, mais avec un prompt
@@ -301,58 +308,60 @@ type Gta6Aspect = (typeof GTA6_ASPECTS)[number]["id"];
    ce sont les meilleures différences de chaque formule par rapport aux autres. */
 interface PlanFeature { text: string; hl?: boolean }
 
-const PLANS_DATA: {
+function buildPlansData(t: (k: string) => string): {
   id: string; name: string; icon: React.ElementType; priceMonthly: number;
   originalPrice: string; yearlyTotal: number; credits: string; creditsDesc: string;
   bonus?: string; badge: null | "Best Value" | "Exclusif"; tagline: string;
   features: PlanFeature[];
-}[] = [
+}[] {
+  return [
   {
-    id: "essentiel", name: "Découverte", icon: Zap, priceMonthly: 4.90, originalPrice: "11,90", yearlyTotal: 49,
-    credits: "2 500", creditsDesc: "Soit environ 25 images par mois",
+    id: "essentiel", name: t("dash.plan.essentiel.name"), icon: Zap, priceMonthly: 4.90, originalPrice: "11,90", yearlyTotal: 49,
+    credits: "2 500", creditsDesc: t("dash.plan.essentiel.creditsDesc"),
     badge: null,
-    tagline: "Pour tester et s'amuser de temps en temps",
+    tagline: t("dash.plan.essentiel.tagline"),
     features: [
-      { text: "Le petit prix pour découvrir l'IA", hl: true },
-      { text: "Environ 25 images par mois" },
-      { text: "Photos uniquement — pas de vidéo" },
-      { text: "Qualité correcte pour partager entre amis" },
-      { text: "Petit logo discret sur vos images" },
-      { text: "Vos 20 dernières créations gardées en mémoire" },
+      { text: t("dash.plan.essentiel.f1"), hl: true },
+      { text: t("dash.plan.essentiel.f2") },
+      { text: t("dash.plan.essentiel.f3") },
+      { text: t("dash.plan.essentiel.f4") },
+      { text: t("dash.plan.essentiel.f5") },
+      { text: t("dash.plan.essentiel.f6") },
     ],
   },
   {
-    id: "pro", name: "Essentiel", icon: Star, priceMonthly: 9.90, originalPrice: "24,90", yearlyTotal: 99,
-    credits: "10 250", creditsDesc: "Soit environ 100 images par mois", bonus: "+2 500 crédits offerts",
+    id: "pro", name: t("dash.plan.pro.name"), icon: Star, priceMonthly: 9.90, originalPrice: "24,90", yearlyTotal: 99,
+    credits: "10 250", creditsDesc: t("dash.plan.pro.creditsDesc"), bonus: t("dash.plan.pro.bonus"),
     badge: "Best Value",
-    tagline: "Le choix préféré : vidéos, images plus belles, zéro logo",
+    tagline: t("dash.plan.pro.tagline"),
     features: [
-      { text: "4× plus d'images que Découverte (~100/mois)", hl: true },
-      { text: "GTA 5 Intégral : toute l'image en style GTA 5 (3/mois)", hl: true },
-      { text: "Aucun logo — vos images sont 100 % à vous", hl: true },
-      { text: "Images beaucoup plus nettes et détaillées" },
-      { text: "Vos 100 dernières créations gardées en mémoire" },
+      { text: t("dash.plan.pro.f1"), hl: true },
+      { text: t("dash.plan.pro.f2"), hl: true },
+      { text: t("dash.plan.pro.f3"), hl: true },
+      { text: t("dash.plan.pro.f4") },
+      { text: t("dash.plan.pro.f5") },
     ],
   },
   {
-    id: "elite", name: "Ultimate", icon: Crown, priceMonthly: 19.90, originalPrice: "49,90", yearlyTotal: 199,
-    credits: "Illimités", creditsDesc: "Créez autant que vous voulez, sans compter",
+    id: "elite", name: t("dash.plan.elite.name"), icon: Crown, priceMonthly: 19.90, originalPrice: "49,90", yearlyTotal: 199,
+    credits: t("dash.plan.elite.credits"), creditsDesc: t("dash.plan.elite.creditsDesc"),
     badge: "Exclusif",
-    tagline: "Zéro limite : tout est débloqué, tout est prioritaire",
+    tagline: t("dash.plan.elite.tagline"),
     features: [
-      { text: "Vidéo IA — accès complet", hl: true },
-      { text: "Accès anticipé à GTA 6", hl: true },
-      { text: "GTA 5 Intégral : toute l'image en style GTA 5 (35/mois)", hl: true },
-      { text: "Communauté privée incluse", hl: true },
-      { text: "Assistance dédiée 7j/7 — exclusif Ultimate", hl: true },
-      { text: "Images et vidéos illimitées — aucun quota" },
-      { text: "La plus belle qualité d'image possible" },
-      { text: "Vos créations passent devant tout le monde (2× plus rapide)" },
-      { text: "Décrivez librement votre image avec vos mots (exclusif Ultimate)" },
-      { text: "Toutes vos créations gardées à vie" },
+      { text: t("dash.plan.elite.f1"), hl: true },
+      { text: t("dash.plan.elite.f2"), hl: true },
+      { text: t("dash.plan.elite.f3"), hl: true },
+      { text: t("dash.plan.elite.f4"), hl: true },
+      { text: t("dash.plan.elite.f5"), hl: true },
+      { text: t("dash.plan.elite.f6") },
+      { text: t("dash.plan.elite.f7") },
+      { text: t("dash.plan.elite.f8") },
+      { text: t("dash.plan.elite.f9") },
+      { text: t("dash.plan.elite.f10") },
     ],
   },
-];
+  ];
+}
 
 /* ─── Main page ──────────────────────────────────────────── */
 export default function DashboardPage() {
@@ -366,8 +375,12 @@ export default function DashboardPage() {
 
 function DashboardContent() {
   const router = useRouter();
+  const { t } = useI18n();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const NAV_ITEMS = buildNavItems(t);
+  const GEN_TABS = buildGenTabs(t);
+  const PLANS_DATA = buildPlansData(t);
   const [navView, setNavView]   = useState<NavView>("create");
   const [genType, setGenType]   = useState<GenType>("create");
   const [planBilling, setPlanBilling] = useState<"monthly" | "yearly">("yearly");
@@ -2542,11 +2555,12 @@ function QualitySelector({
   onLockedClick: (q: QualityLevel) => void;
   step: number;
 }) {
+  const { t } = useI18n();
   return (
     <AnimatedCard delay={0.12} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-4">
       <h2 className="font-semibold text-sm mb-3 flex items-center justify-between">
         <span className="flex items-center gap-2">
-          Qualité du résultat
+          {t("dash.qs.title")}
           <Sparkles className="w-3.5 h-3.5 text-accent-orange" />
         </span>
         <StepBadge n={step} />
@@ -2574,17 +2588,17 @@ function QualitySelector({
               <span className={`font-black text-base leading-none ${active ? "gradient-text-orange-subtle" : "text-white"}`}>
                 {q.label}
               </span>
-              <span className="text-[9px] text-white/40 leading-tight">{q.sub}</span>
+              <span className="text-[9px] text-white/40 leading-tight">{t(`dash.quality.${q.id}.sub`)}</span>
             </button>
           );
         })}
       </div>
       <p className="text-white/35 text-[11px] mt-2.5 leading-snug">
         {tier === "elite"
-          ? "Formule Ultimate : qualité Ultra 8K débloquée. 🎉"
+          ? t("dash.qs.hintElite")
           : tier === "pro"
-            ? "Formule Essentiel : jusqu'à la 4K. Passez à Ultimate pour l'Ultra 8K."
-            : "Formule Découverte : HD 1080p. Passez à une formule supérieure pour la 4K / Ultra."}
+            ? t("dash.qs.hintPro")
+            : t("dash.qs.hintEssentiel")}
       </p>
     </AnimatedCard>
   );
@@ -2592,13 +2606,14 @@ function QualitySelector({
 
 /* ─── Panneau récap des avantages de la formule active ───────────────────── */
 function PlanPerksCard({ tier, onUpgrade }: { tier: "essentiel" | "pro" | "elite"; onUpgrade: () => void }) {
-  const perks    = PLAN_PERKS[tier];
-  const tierName = tier === "elite" ? "Ultimate" : tier === "pro" ? "Essentiel" : "Découverte";
+  const { t } = useI18n();
+  const perks    = buildPlanPerks(t)[tier];
+  const tierName = t(`dash.plan.${tier}.name`);
   return (
     <AnimatedCard delay={0.2} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-4">
       <h2 className="font-semibold text-sm mb-3 flex items-center gap-2">
         <Crown className={`w-4 h-4 ${tier === "elite" ? "text-amber-400" : tier === "pro" ? "text-accent-orange" : "text-white/50"}`} />
-        Votre formule <span className="text-white/50">— {tierName}</span>
+        {t("dash.perks.yourPlan")} <span className="text-white/50">— {tierName}</span>
       </h2>
       <ul className="space-y-1.5">
         {perks.map((p) => (
@@ -2616,7 +2631,7 @@ function PlanPerksCard({ tier, onUpgrade }: { tier: "essentiel" | "pro" | "elite
           className="btn-primary-orange w-full mt-3.5 py-2 text-sm flex items-center justify-center gap-1.5"
         >
           <Crown className="w-4 h-4" />
-          Débloquer plus de puissance
+          {t("dash.perks.unlockMore")}
         </button>
       )}
     </AnimatedCard>
@@ -2637,12 +2652,13 @@ function GenerateCard({
   step: number;
   plan?: string;
 }) {
+  const { t } = useI18n();
   const qBadge = planQualityBadge(plan);
   return (
     <AnimatedCard delay={0.16} className="card">
       <h2 className="font-bold text-base mb-4 flex items-center justify-between">
         <span className="flex items-center gap-2">
-          Générer
+          {t("dash.gen.generate")}
           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${qBadge.color}`}>
             {qBadge.label}
           </span>
@@ -2658,8 +2674,8 @@ function GenerateCard({
           </div>
         </div>
         <span className="text-white/55 text-sm leading-relaxed">
-          Je confirme avoir le droit d&apos;utiliser ces médias et j&apos;accepte les{" "}
-          <a href="/terms" className="text-accent-orange hover:underline">conditions d&apos;utilisation</a>.
+          {t("dash.gen.consent")}{" "}
+          <a href="/terms" className="text-accent-orange hover:underline">{t("dash.gen.termsLink")}</a>.
         </span>
       </label>
 
@@ -2677,7 +2693,7 @@ function GenerateCard({
           className="w-full py-3.5 text-base flex items-center justify-center gap-2 rounded-2xl border border-red-500/40 text-red-400 hover:bg-red-500/10 font-semibold transition-all"
         >
           <StopCircle className="w-5 h-5" />
-          Arrêter la génération
+          {t("dash.gen.stop")}
         </motion.button>
       ) : (
         <motion.button
@@ -2695,7 +2711,7 @@ function GenerateCard({
             />
           )}
           <Sparkles className="w-5 h-5 relative z-10" />
-          <span className="relative z-10">Générer {qBadge.label} — {credits} crédits</span>
+          <span className="relative z-10">{t("dash.gen.generate")} {qBadge.label} — {credits} {t("dash.credits")}</span>
         </motion.button>
       )}
     </AnimatedCard>
