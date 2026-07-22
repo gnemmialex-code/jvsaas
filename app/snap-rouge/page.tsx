@@ -5,22 +5,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Flame, ArrowLeft, Play, CheckCircle2, Lock, Lightbulb, AlertTriangle } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 // La vidéo de la technique est servie par /api/snap-rouge/video :
 // fichier stocké dans private-videos/tuto-snap-rouge.mp4 (hors de /public),
 // accessible UNIQUEMENT aux acheteurs et abonnés Pro / Elite.
 const TECHNIQUE_VIDEO_URL = "/api/snap-rouge/video";
 
-// Étapes de la technique — personnalise librement les textes ci-dessous.
-const TECHNIQUE_STEPS = [
-  { title: "Préparez votre photo", desc: "Générez votre transformation IA sur High Like It et téléchargez le résultat en haute qualité sur votre téléphone." },
-  { title: "Ouvrez Snapchat", desc: "Lancez Snapchat et accédez à l'appareil photo principal." },
-  { title: "Appliquez la technique", desc: "Suivez précisément la vidéo ci-dessous pour envoyer votre image en Snap Rouge (et non en Snap violet)." },
-  { title: "Envoyez votre Snap", desc: "Votre photo part comme un vrai Snap pris sur le moment — effet garanti." },
-];
-
 export default function SnapRougePage() {
   const router = useRouter();
+  const { t } = useI18n();
+  const TECHNIQUE_STEPS = [
+    { title: t("snap.step1.title"), desc: t("snap.step1.desc") },
+    { title: t("snap.step2.title"), desc: t("snap.step2.desc") },
+    { title: t("snap.step3.title"), desc: t("snap.step3.desc") },
+    { title: t("snap.step4.title"), desc: t("snap.step4.desc") },
+  ];
   const [access, setAccess] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function SnapRougePage() {
           className="w-10 h-10 rounded-full border-2 border-red-500/30 border-t-red-500"
         />
         <p className="text-white/40 text-sm flex items-center gap-2">
-          <Lock className="w-4 h-4" /> Vérification de votre accès…
+          <Lock className="w-4 h-4" /> {t("snap.checking")}
         </p>
       </div>
     );
@@ -64,7 +64,7 @@ export default function SnapRougePage() {
           className="inline-flex items-center gap-2 text-white/40 hover:text-white text-sm mb-10 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Retour au Dashboard
+          {t("snap.back")}
         </Link>
 
         {/* Header */}
@@ -75,14 +75,13 @@ export default function SnapRougePage() {
         >
           <div className="inline-flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 text-sm font-semibold px-4 py-2 rounded-full mb-6">
             <Flame className="w-4 h-4" />
-            Accès débloqué — Contenu exclusif
+            {t("snap.badge")}
           </div>
           <h1 className="text-4xl sm:text-6xl font-black mb-4">
-            La technique <span className="text-red-500">Snap Rouge</span>
+            {t("snap.title1")} <span className="text-red-500">Snap Rouge</span>
           </h1>
           <p className="text-white/50 text-lg max-w-2xl mx-auto">
-            Envoyez vos créations IA comme de vrais Snaps pris sur le moment.
-            Suivez le guide étape par étape ci-dessous.
+            {t("snap.subtitle")}
           </p>
         </motion.div>
 
@@ -115,7 +114,7 @@ export default function SnapRougePage() {
         >
           <h2 className="text-2xl font-black mb-6 flex items-center gap-2">
             <Play className="w-6 h-6 text-red-400" />
-            La technique complète en vidéo
+            {t("snap.videoTitle")}
           </h2>
           <div className="rounded-3xl overflow-hidden border border-red-500/30 bg-surface shadow-lg shadow-red-500/10 max-w-3xl mx-auto">
             <video
@@ -128,10 +127,10 @@ export default function SnapRougePage() {
               className="w-full h-auto block"
             />
             <div className="px-5 py-4 flex items-center justify-between gap-3 border-t border-surface-border">
-              <p className="font-semibold text-white text-sm">Tuto Snap Rouge — pas à pas</p>
+              <p className="font-semibold text-white text-sm">{t("snap.tutoLabel")}</p>
               <span className="flex items-center gap-1.5 text-red-400 text-xs font-bold bg-red-500/10 border border-red-500/25 px-2.5 py-1 rounded-full flex-shrink-0">
                 <Lock className="w-3 h-3" />
-                Exclusif membres
+                {t("snap.exclusive")}
               </span>
             </div>
           </div>
@@ -147,20 +146,18 @@ export default function SnapRougePage() {
           <div className="card border-amber-400/20 bg-amber-400/5 flex items-start gap-4">
             <Lightbulb className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-white mb-1">Conseil pro</p>
+              <p className="font-bold text-white mb-1">{t("snap.tipTitle")}</p>
               <p className="text-white/50 text-sm leading-relaxed">
-                Pour un rendu encore plus crédible, générez vos photos au format Portrait (9:16) —
-                c&apos;est le format natif des Snaps.
+                {t("snap.tipDesc")}
               </p>
             </div>
           </div>
           <div className="card border-red-500/20 bg-red-500/5 flex items-start gap-4">
             <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-white mb-1">Rappel important</p>
+              <p className="font-bold text-white mb-1">{t("snap.warnTitle")}</p>
               <p className="text-white/50 text-sm leading-relaxed">
-                Cette technique est destinée à un usage créatif et humoristique entre amis.
-                N&apos;utilisez jamais ce contenu pour tromper, harceler ou nuire à autrui.
+                {t("snap.warnDesc")}
               </p>
             </div>
           </div>
@@ -175,7 +172,7 @@ export default function SnapRougePage() {
         >
           <Link href="/dashboard" className="btn-primary inline-flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4" />
-            Créer ma transformation maintenant
+            {t("snap.cta")}
           </Link>
         </motion.div>
 

@@ -6,8 +6,10 @@ import { Send, Paperclip, X } from "lucide-react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { supabase } from "@/lib/supabase";
+import { useI18n } from "@/lib/i18n";
 
 function ContactForm() {
+  const { t } = useI18n();
   const [email,       setEmail]       = useState("");
   const [emailLocked, setEmailLocked] = useState(false);
   const [firstName,   setFirstName]   = useState("");
@@ -40,7 +42,7 @@ function ContactForm() {
     e.preventDefault();
     setError(null);
     if (!email || !firstName || !subject || !message) {
-      setError("Veuillez remplir tous les champs obligatoires.");
+      setError(t("asst.fillRequired"));
       return;
     }
     setLoading(true);
@@ -54,10 +56,10 @@ function ContactForm() {
 
       const res = await fetch("/api/contact", { method: "POST", body: fd });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Erreur lors de l'envoi");
+      if (!res.ok) throw new Error(data.error ?? t("asst.sendError"));
       setSuccess(true);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      setError(err instanceof Error ? err.message : t("dash.err.unknown"));
     } finally {
       setLoading(false);
     }
@@ -73,15 +75,15 @@ function ContactForm() {
         <div className="w-16 h-16 bg-green-500/20 border border-green-500/30 rounded-2xl flex items-center justify-center mb-5">
           <span className="text-3xl">✓</span>
         </div>
-        <h3 className="text-2xl font-bold mb-2">Message envoyé !</h3>
+        <h3 className="text-2xl font-bold mb-2">{t("asst.sent")}</h3>
         <p className="text-white/50 max-w-sm">
-          Merci {firstName}, nous avons bien reçu votre message et vous répondrons rapidement.
+          {t("asst.sentThanks").replace("{name}", firstName)}
         </p>
         <button
           onClick={() => { setSuccess(false); setSubject(""); setMessage(""); setImageFile(null); setImagePreview(null); if (!emailLocked) setEmail(""); setFirstName(""); }}
           className="mt-6 text-accent-violet text-sm hover:underline"
         >
-          Envoyer un autre message
+          {t("asst.sendAnother")}
         </button>
       </motion.div>
     );
@@ -93,27 +95,27 @@ function ContactForm() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-semibold text-white/50 uppercase tracking-wide mb-1.5">
-            Email <span className="text-red-400">*</span>
+            {t("login.email")} <span className="text-red-400">*</span>
           </label>
           <input
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
             readOnly={emailLocked}
-            placeholder="votre@email.com"
+            placeholder={t("asst.emailPlaceholder")}
             className={`w-full bg-surface border border-surface-border rounded-xl px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-accent-violet/60 transition-colors ${emailLocked ? "opacity-60 cursor-not-allowed" : ""}`}
           />
-          {emailLocked && <p className="text-white/30 text-[10px] mt-1">Pré-rempli depuis votre compte</p>}
+          {emailLocked && <p className="text-white/30 text-[10px] mt-1">{t("asst.prefilled")}</p>}
         </div>
         <div>
           <label className="block text-xs font-semibold text-white/50 uppercase tracking-wide mb-1.5">
-            Prénom <span className="text-red-400">*</span>
+            {t("asst.firstName")} <span className="text-red-400">*</span>
           </label>
           <input
             type="text"
             value={firstName}
             onChange={e => setFirstName(e.target.value)}
-            placeholder="Votre prénom"
+            placeholder={t("asst.firstNamePlaceholder")}
             className="w-full bg-surface border border-surface-border rounded-xl px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-accent-violet/60 transition-colors"
           />
         </div>
@@ -122,13 +124,13 @@ function ContactForm() {
       {/* Sujet */}
       <div>
         <label className="block text-xs font-semibold text-white/50 uppercase tracking-wide mb-1.5">
-          Motif / Sujet <span className="text-red-400">*</span>
+          {t("asst.subject")} <span className="text-red-400">*</span>
         </label>
         <input
           type="text"
           value={subject}
           onChange={e => setSubject(e.target.value)}
-          placeholder="Ex : Question sur mon abonnement, Problème technique, Partenariat…"
+          placeholder={t("asst.subjectPlaceholder")}
           className="w-full bg-surface border border-surface-border rounded-xl px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-accent-violet/60 transition-colors"
         />
       </div>
@@ -136,12 +138,12 @@ function ContactForm() {
       {/* Message */}
       <div>
         <label className="block text-xs font-semibold text-white/50 uppercase tracking-wide mb-1.5">
-          Message <span className="text-red-400">*</span>
+          {t("asst.message")} <span className="text-red-400">*</span>
         </label>
         <textarea
           value={message}
           onChange={e => setMessage(e.target.value)}
-          placeholder="Décrivez votre demande en détail…"
+          placeholder={t("asst.messagePlaceholder")}
           rows={5}
           className="w-full bg-surface border border-surface-border rounded-xl px-4 py-3 text-white text-sm placeholder-white/20 focus:outline-none focus:border-accent-violet/60 resize-none transition-colors"
         />
@@ -150,7 +152,7 @@ function ContactForm() {
       {/* Image optionnelle */}
       <div>
         <label className="block text-xs font-semibold text-white/50 uppercase tracking-wide mb-1.5">
-          Image / Capture d&apos;écran <span className="text-white/25 font-normal">(optionnel)</span>
+          {t("asst.imageLabel")} <span className="text-white/25 font-normal">{t("dash.create.optionalParen")}</span>
         </label>
         {imagePreview ? (
           <div className="relative inline-block">
@@ -171,7 +173,7 @@ function ContactForm() {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-surface-border text-white/40 hover:text-white hover:border-accent-violet/40 text-sm transition-colors"
           >
             <Paperclip className="w-4 h-4" />
-            Joindre une image (JPG, PNG — max 5 Mo)
+            {t("asst.attachImage")}
           </button>
         )}
         <input
@@ -197,13 +199,14 @@ function ContactForm() {
         ) : (
           <Send className="w-4 h-4" />
         )}
-        {loading ? "Envoi en cours…" : "Envoyer le message"}
+        {loading ? t("asst.sending") : t("asst.sendMessage")}
       </button>
     </form>
   );
 }
 
 export default function AssistancePage() {
+  const { t } = useI18n();
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -212,14 +215,14 @@ export default function AssistancePage() {
         <div className="mb-10 text-center">
           <span className="inline-flex items-center gap-2 bg-accent-violet/10 border border-accent-violet/30 text-accent-violet text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
             <Send className="w-3.5 h-3.5" />
-            Assistance
+            {t("asst.badge")}
           </span>
           <h1 className="text-4xl sm:text-5xl font-black mb-4 leading-tight">
-            Une question ?<br />
-            <span className="gradient-text">Écrivez-nous</span>
+            {t("asst.title1")}<br />
+            <span className="gradient-text">{t("asst.title2")}</span>
           </h1>
           <p className="text-white/50 leading-relaxed">
-            Support, partenariat, retour d&apos;expérience — on vous répond en général sous 24h.
+            {t("asst.subtitle")}
           </p>
         </div>
 
@@ -229,8 +232,8 @@ export default function AssistancePage() {
 
         <div className="text-center mt-8 space-y-1 text-sm text-white/40">
           <p>📧 contact@riseandclose.co</p>
-          <p>⏱️ Réponse sous 24h en moyenne</p>
-          <p>🔒 Vos données restent confidentielles</p>
+          <p>⏱️ {t("asst.reply24")}</p>
+          <p>🔒 {t("asst.confidential")}</p>
         </div>
       </div>
 
