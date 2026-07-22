@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Download, Share2, RefreshCw, Maximize2, Check, Lock, Crown } from "lucide-react";
 import toast from "react-hot-toast";
+import { useI18n } from "@/lib/i18n";
 
 interface ResultCardProps {
   outputUrl: string;
@@ -26,6 +27,7 @@ export default function ResultCard({
   isRegenerating = false,
   locked = false,
 }: ResultCardProps) {
+  const { t } = useI18n();
   const [showOriginal, setShowOriginal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -42,9 +44,9 @@ export default function ResultCard({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      toast.success("Image téléchargée !");
+      toast.success(t("rc.downloaded"));
     } catch {
-      toast.error("Erreur lors du téléchargement");
+      toast.error(t("dash.toast.downloadError"));
     }
   };
 
@@ -52,18 +54,18 @@ export default function ResultCard({
     try {
       if (navigator.share) {
         await navigator.share({
-          title: "Mon personnage High Like It",
-          text: "Regardez mon avatar Ultra HD généré par IA (GTA 5, Fortnite, Simpsons, Minecraft) !",
+          title: t("rc.shareTitle"),
+          text: t("rc.shareText"),
           url: outputUrl,
         });
       } else {
         await navigator.clipboard.writeText(outputUrl);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-        toast.success("Lien copié !");
+        toast.success(t("dash.toast.linkCopied"));
       }
     } catch {
-      toast.error("Impossible de partager");
+      toast.error(t("rc.shareError"));
     }
   };
 
@@ -78,7 +80,7 @@ export default function ResultCard({
         <div className="relative aspect-square rounded-xl overflow-hidden mb-4 group">
           <Image
             src={showOriginal && inputUrl ? inputUrl : outputUrl}
-            alt="Résultat High Like It"
+            alt={t("dash.result.title")}
             fill
             className={`object-cover transition-all duration-300 ${locked && !showOriginal ? "blur-2xl scale-110" : ""}`}
           />
@@ -89,13 +91,13 @@ export default function ResultCard({
               <div className="w-14 h-14 rounded-2xl bg-accent-violet/20 border border-accent-violet/40 flex items-center justify-center">
                 <Lock className="w-7 h-7 text-accent-violet" />
               </div>
-              <p className="text-white font-bold text-sm">Aperçu flouté</p>
+              <p className="text-white font-bold text-sm">{t("dash.locked.title")}</p>
               <p className="text-white/70 text-xs max-w-[240px] leading-relaxed">
-                Passez à une formule pour révéler votre image en haute définition.
+                {t("dash.locked.desc")}
               </p>
               <Link href="/pricing" className="btn-primary flex items-center gap-1.5 px-4 py-2 text-sm mt-1">
                 <Crown className="w-4 h-4" />
-                Débloquer en HD
+                {t("dash.result.unlockHd")}
               </Link>
             </div>
           )}
@@ -138,7 +140,7 @@ export default function ResultCard({
                     !showOriginal ? "bg-accent-violet text-white" : "text-white/60 hover:text-white"
                   }`}
                 >
-                  Résultat
+                  {t("dash.result.title")}
                 </button>
                 <button
                   onClick={() => setShowOriginal(true)}
@@ -156,7 +158,7 @@ export default function ResultCard({
         {/* Info */}
         {generatedAt && (
           <p className="text-white/30 text-xs mb-4">
-            Généré le {new Date(generatedAt).toLocaleString("fr-FR")}
+{t("rc.generatedOn")} {new Date(generatedAt).toLocaleString(undefined)}
           </p>
         )}
 
@@ -168,7 +170,7 @@ export default function ResultCard({
               className="btn-primary flex-1 flex items-center justify-center gap-2 py-3"
             >
               <Crown className="w-4 h-4" />
-              Débloquer en HD
+              {t("dash.result.unlockHd")}
             </Link>
           ) : (
             <>
@@ -177,7 +179,7 @@ export default function ResultCard({
                 className="btn-primary flex-1 flex items-center justify-center gap-2 py-3"
               >
                 <Download className="w-4 h-4" />
-                Télécharger
+                {t("dash.result.download")}
               </button>
               <button
                 onClick={handleShare}

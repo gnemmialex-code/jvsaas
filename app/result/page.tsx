@@ -10,6 +10,7 @@ import { ArrowLeft, Sparkles } from "lucide-react";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { isPaidPlan } from "@/lib/plan";
+import { useI18n } from "@/lib/i18n";
 
 interface Generation {
   id: string;
@@ -22,6 +23,7 @@ interface Generation {
 function ResultContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { t } = useI18n();
   const generationId = searchParams.get("id");
 
   const [generation, setGeneration] = useState<Generation | null>(null);
@@ -32,7 +34,7 @@ function ResultContent() {
 
   useEffect(() => {
     if (!generationId) {
-      setError("ID de génération manquant");
+      setError(t("res.missingId"));
       setLoading(false);
       return;
     }
@@ -47,11 +49,11 @@ function ResultContent() {
   const fetchGeneration = async (id: string) => {
     try {
       const res = await fetch(`/api/generate?id=${id}`);
-      if (!res.ok) throw new Error("Génération introuvable");
+      if (!res.ok) throw new Error(t("res.notFound"));
       const data = await res.json();
       setGeneration(data);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Erreur");
+      setError(err instanceof Error ? err.message : t("dash.err.unknown"));
     } finally {
       setLoading(false);
     }
@@ -67,16 +69,16 @@ function ResultContent() {
         body: JSON.stringify({ generation_id: generation.id }),
       });
       if (res.status === 402) {
-        toast.error("Crédits insuffisants");
+        toast.error(t("paywall.insufficient"));
         return;
       }
-      if (!res.ok) throw new Error("Erreur de régénération");
+      if (!res.ok) throw new Error(t("res.regenError"));
       const data = await res.json();
       if (data.generation_id) {
         router.push(`/result?id=${data.generation_id}`);
       }
     } catch {
-      toast.error("Erreur lors de la régénération");
+      toast.error(t("res.regenError2"));
     } finally {
       setIsRegenerating(false);
     }
@@ -85,7 +87,7 @@ function ResultContent() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center pt-16">
-        <Loader message="Chargement du résultat..." />
+        <Loader message={t("res.loading")} />
       </div>
     );
   }
@@ -93,9 +95,9 @@ function ResultContent() {
   if (error || !generation) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center pt-16 px-4 text-center">
-        <p className="text-white/50 mb-6">{error ?? "Résultat introuvable"}</p>
+        <p className="text-white/50 mb-6">{error ?? t("res.notFound2")}</p>
         <Link href="/upload" className="btn-primary">
-          Nouvelle génération
+          {t("res.newGen")}
         </Link>
       </div>
     );
@@ -113,19 +115,19 @@ function ResultContent() {
           className="inline-flex items-center gap-2 text-white/50 hover:text-white transition-colors text-sm mb-6"
         >
           <ArrowLeft className="w-4 h-4" />
-          Nouvelle génération
+          {t("res.newGen")}
         </Link>
 
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl sm:text-4xl font-black mb-1">
-              Votre <span className="gradient-text">transformation</span>
+              {t("res.yourTitle")} <span className="gradient-text">{t("res.yourTitleAccent")}</span>
             </h1>
-            <p className="text-white/50">Style : {generation.style}</p>
+            <p className="text-white/50">{t("res.styleLabel")} {generation.style}</p>
           </div>
           <Link href="/dashboard" className="btn-secondary text-sm hidden sm:flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
-            Voir l&apos;historique
+            {t("res.viewHistory")}
           </Link>
         </div>
       </motion.div>
@@ -154,13 +156,13 @@ function ResultContent() {
           className="space-y-4"
         >
           <div className="card">
-            <h3 className="font-semibold mb-3">Détails de la génération</h3>
+            <h3 className="font-semibold mb-3">{t("res.details")}</h3>
             <div className="space-y-2 text-sm">
               {[
-                { label: "Style", value: generation.style },
-                { label: "Qualité", value: "4K Ultra HD" },
-                { label: "Modèle", value: "High Like It v2" },
-                { label: "Date", value: new Date(generation.created_at).toLocaleDateString("fr-FR") },
+                { label: t("res.style"), value: generation.style },
+                { label: t("pricing.hl.quality"), value: "4K Ultra HD" },
+                { label: t("dash.set.model"), value: "High Like It v2" },
+                { label: t("res.date"), value: new Date(generation.created_at).toLocaleDateString(undefined) },
               ].map(({ label, value }) => (
                 <div key={label} className="flex justify-between">
                   <span className="text-white/40">{label}</span>
@@ -171,19 +173,19 @@ function ResultContent() {
           </div>
 
           <div className="card">
-            <h3 className="font-semibold mb-3">Créer une autre</h3>
+            <h3 className="font-semibold mb-3">{t("res.createAnother")}</h3>
             <p className="text-white/50 text-sm mb-4">
-              Essayez un style différent ou uploadez une nouvelle photo.
+              {t("res.tryAnother")}
             </p>
             <Link href="/upload" className="btn-primary w-full flex items-center justify-center gap-2">
               <Sparkles className="w-4 h-4" />
-              Nouvelle génération
+              {t("res.newGen")}
             </Link>
           </div>
 
           <div className="card border-accent-violet/20 bg-accent-violet/5">
             <p className="text-sm text-white/60 leading-relaxed">
-              🔒 <strong className="text-white">Confidentialité</strong> : votre photo originale est supprimée de nos serveurs après traitement. Seule l&apos;image générée est conservée dans votre historique.
+              🔒 <strong className="text-white">{t("res.privacyLabel")}</strong> {t("res.privacyText")}
             </p>
           </div>
         </motion.div>
@@ -196,7 +198,7 @@ export default function ResultPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <Suspense fallback={<Loader message="Chargement..." />}>
+      <Suspense fallback={<Loader />}>
         <ResultContent />
       </Suspense>
     </div>
