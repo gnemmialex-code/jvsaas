@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, MessageCircle, Send } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useI18n } from "@/lib/i18n";
 
 // Chaque profil = un pseudo dont le genre correspond réellement à la photo associée.
 // La photo 11 (couple homme+femme) est exclue car elle ne représente pas une seule personne.
@@ -170,17 +171,17 @@ interface FeedItem {
   timestamp: number;
 }
 
-function timeAgo(ts: number): string {
+function timeAgo(ts: number, t: (k: string) => string): string {
   const diffSec = Math.floor((Date.now() - ts) / 1000);
-  if (diffSec < 60) return "à l'instant";
+  if (diffSec < 60) return t("reviews.now");
   const diffMin = Math.floor(diffSec / 60);
-  if (diffMin < 60) return `il y a ${diffMin} min`;
+  if (diffMin < 60) return t("reviews.agoMin").replace("{n}", String(diffMin));
   const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return `il y a ${diffH} h`;
+  if (diffH < 24) return t("reviews.agoHour").replace("{n}", String(diffH));
   const diffD = Math.floor(diffH / 24);
-  if (diffD < 30) return `il y a ${diffD} j`;
+  if (diffD < 30) return t("reviews.agoDay").replace("{n}", String(diffD));
   const diffMo = Math.floor(diffD / 30);
-  return `il y a ${diffMo} mois`;
+  return t("reviews.agoMonth").replace("{n}", String(diffMo));
 }
 
 const STORAGE_KEY = "highlights_reviews_feed_v1";
@@ -224,6 +225,7 @@ function enforceMinGap(items: FeedItem[]): FeedItem[] {
 let feedCounter = 0;
 
 export default function ReviewsBubble() {
+  const { t } = useI18n();
   const [feed, setFeed] = useState<FeedItem[]>([]);
   const [open, setOpen] = useState(false);
   const [bounce, setBounce] = useState(false);
@@ -362,12 +364,12 @@ export default function ReviewsBubble() {
             className="absolute bottom-10 right-0 w-80 h-[30rem] flex flex-col bg-[#0a0a0a]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
           >
             <p className="text-white/30 text-[10px] text-center py-2.5 uppercase tracking-wide border-b border-white/5 flex-shrink-0">
-              Avis récents
+              {t("reviews.recent")}
             </p>
 
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 no-scrollbar">
               {feed.length === 0 && (
-                <p className="text-white/40 text-xs text-center py-6">Les avis récents apparaîtront ici</p>
+                <p className="text-white/40 text-xs text-center py-6">{t("reviews.empty")}</p>
               )}
               <div className="space-y-2.5">
                 <AnimatePresence initial={false}>
@@ -393,9 +395,9 @@ export default function ReviewsBubble() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline justify-between gap-2 mb-0.5 px-1">
                             <p className="text-white/50 text-[10px] font-medium truncate">
-                              {isMe ? "Vous" : `@${item.profile.name}`}
+                              {isMe ? t("reviews.you") : `@${item.profile.name}`}
                             </p>
-                            <span className="text-white/25 text-[9px] flex-shrink-0">{timeAgo(item.timestamp)}</span>
+                            <span className="text-white/25 text-[9px] flex-shrink-0">{timeAgo(item.timestamp, t)}</span>
                           </div>
                           {/* Bulle façon iMessage (message reçu) */}
                           <div className={`rounded-2xl rounded-bl-md px-3 py-2 ${isMe ? "bg-accent-violet/20" : "bg-white/[0.08]"}`}>
@@ -447,7 +449,7 @@ export default function ReviewsBubble() {
                     value={myComment}
                     onChange={(e) => setMyComment(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && submitMyReview()}
-                    placeholder="Laisse ton avis..."
+                    placeholder={t("reviews.placeholder")}
                     className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-full px-3 py-1.5 text-[11px] text-white placeholder-white/30 focus:outline-none focus:border-white/20"
                   />
                   <button
@@ -461,7 +463,7 @@ export default function ReviewsBubble() {
               ) : (
                 <Link href="/login" className="flex items-center gap-1.5 group">
                   <span className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-full px-3 py-1.5 text-[11px] text-white/30 cursor-not-allowed">
-                    Se connecter pour laisser un avis
+                    {t("reviews.loginToReview")}
                   </span>
                   <span className="gradient-bg-orange-animated opacity-80 shrink-0 w-7 h-7 rounded-full flex items-center justify-center group-hover:opacity-60 group-hover:scale-125 transition-all duration-300">
                     <Send className="w-3 h-3 text-white" />

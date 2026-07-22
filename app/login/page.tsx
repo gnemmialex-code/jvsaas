@@ -161,7 +161,7 @@ export default function LoginPage() {
               className="w-full flex items-center justify-center gap-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-sm font-medium text-white disabled:opacity-50"
             >
               <GoogleIcon />
-              {oauthLoading === "google" ? "Redirection..." : "Continuer avec Google"}
+              {oauthLoading === "google" ? t("register.redirecting") : t("register.continueGoogle")}
             </button>
           </div>
 
@@ -170,7 +170,7 @@ export default function LoginPage() {
               <div className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-black px-3 text-white/30 text-sm">ou</span>
+              <span className="bg-black px-3 text-white/30 text-sm">{t("register.or")}</span>
             </div>
           </div>
 

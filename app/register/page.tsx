@@ -65,6 +65,7 @@ function LanguageMenu() {
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -90,12 +91,12 @@ export default function RegisterPage() {
 
   const validate = () => {
     const errs: Record<string, string> = {};
-    if (!email) errs.email = "Email requis";
-    else if (!/\S+@\S+\.\S+/.test(email)) errs.email = "Email invalide";
-    if (!password) errs.password = "Mot de passe requis";
-    else if (password.length < 8) errs.password = "8 caractères minimum";
-    if (password !== confirmPassword) errs.confirmPassword = "Les mots de passe ne correspondent pas";
-    if (!acceptTerms) errs.terms = "Vous devez accepter les CGU";
+    if (!email) errs.email = t("login.errorEmailRequired");
+    else if (!/\S+@\S+\.\S+/.test(email)) errs.email = t("login.errorEmailInvalid");
+    if (!password) errs.password = t("login.errorPasswordRequired");
+    else if (password.length < 8) errs.password = t("register.errorMinChars");
+    if (password !== confirmPassword) errs.confirmPassword = t("register.errorPasswordMismatch");
+    if (!acceptTerms) errs.terms = t("register.errorTerms");
     return errs;
   };
 
@@ -119,18 +120,18 @@ export default function RegisterPage() {
       // Confirmation email désactivée côté Supabase → l'utilisateur reçoit
       // directement une session et est connecté immédiatement.
       if (data.session) {
-        toast.success("Compte créé ! Bienvenue 🎉");
+        toast.success(t("register.toastWelcome"));
         // Redirection directe vers le dashboard, en navigation complète pour
         // que le cookie de session soit bien pris en compte partout.
         window.location.href = "/dashboard";
       } else {
         // Sécurité : si la confirmation email est encore activée côté Supabase,
         // on renvoie vers la connexion sans bloquer.
-        toast.success("Compte créé ! Vous pouvez vous connecter.");
+        toast.success(t("register.toastCreated"));
         router.push("/login");
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erreur lors de l'inscription";
+      const msg = err instanceof Error ? err.message : t("register.errorSignup");
       toast.error(msg);
     } finally {
       setLoading(false);
@@ -151,7 +152,7 @@ export default function RegisterPage() {
       });
       if (error) throw error;
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Erreur de connexion";
+      const msg = err instanceof Error ? err.message : t("login.errorGeneric");
       toast.error(msg);
       setOauthLoading(null);
     }
@@ -173,16 +174,16 @@ export default function RegisterPage() {
         </p>
 
         <div className="text-center mb-5 space-y-2">
-          <h1 className="text-xl font-bold text-white/90">Créer un compte</h1>
+          <h1 className="text-xl font-bold text-white/90">{t("register.title")}</h1>
           <div className="inline-flex items-center gap-1.5 bg-green-500/10 border border-green-500/30 text-green-400 text-sm px-3 py-1.5 rounded-full">
             <Zap className="w-3.5 h-3.5" />
-            100 crédits offerts = 1 image gratuite
+            {t("register.freeCredits")}
           </div>
           {refCode && (
             <div className="block">
               <div className="inline-flex items-center gap-1.5 bg-accent-violet/10 border border-accent-violet/30 text-accent-violet text-sm px-3 py-1.5 rounded-full">
                 <Gift className="w-3.5 h-3.5" />
-                Code parrain <strong>{refCode}</strong> — +100 crédits bonus
+                {t("register.refCode1")} <strong>{refCode}</strong> {t("register.refCode2")}
               </div>
             </div>
           )}
@@ -201,7 +202,7 @@ export default function RegisterPage() {
               className="w-full flex items-center justify-center gap-3 py-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 transition-all text-sm font-medium text-white disabled:opacity-50"
             >
               <GoogleIcon />
-              {oauthLoading === "google" ? "Redirection..." : "Continuer avec Google"}
+              {oauthLoading === "google" ? t("register.redirecting") : t("register.continueGoogle")}
             </button>
           </div>
 
@@ -210,15 +211,15 @@ export default function RegisterPage() {
               <div className="w-full border-t border-white/10" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-black px-3 text-white/30 text-sm">ou</span>
+              <span className="bg-black px-3 text-white/30 text-sm">{t("register.or")}</span>
             </div>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-4">
             <Input
-              label="Email"
+              label={t("login.email")}
               type="email"
-              placeholder="vous@exemple.com"
+              placeholder={t("login.emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               error={errors.email}
@@ -228,9 +229,9 @@ export default function RegisterPage() {
 
             <div className="relative">
               <Input
-                label="Mot de passe"
+                label={t("login.password")}
                 type={showPassword ? "text" : "password"}
-                placeholder="8 caractères minimum"
+                placeholder={t("register.minChars")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 error={errors.password}
@@ -247,9 +248,9 @@ export default function RegisterPage() {
             </div>
 
             <Input
-              label="Confirmer le mot de passe"
+              label={t("register.confirmPassword")}
               type={showPassword ? "text" : "password"}
-              placeholder="Répétez votre mot de passe"
+              placeholder={t("register.repeatPassword")}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               error={errors.confirmPassword}
@@ -274,11 +275,11 @@ export default function RegisterPage() {
                 </div>
               </div>
               <span className="text-white/60 text-sm leading-relaxed">
-                J&apos;accepte les{" "}
-                <Link href="/terms" className="text-accent-orange hover:underline">CGU</Link>{" "}
-                et la{" "}
-                <Link href="/privacy" className="text-accent-orange hover:underline">politique de confidentialité</Link>.
-                Usage personnel uniquement.
+                {t("register.acceptPre")}{" "}
+                <Link href="/terms" className="text-accent-orange hover:underline">{t("footer.link.terms")}</Link>{" "}
+                {t("register.acceptAnd")}{" "}
+                <Link href="/privacy" className="text-accent-orange hover:underline">{t("register.privacyPolicy")}</Link>.
+                {" "}{t("register.personalUse")}
               </span>
             </label>
             {errors.terms && (
@@ -293,15 +294,15 @@ export default function RegisterPage() {
               transition={{ duration: 0.6, ease: "easeOut" }}
               className="w-full bg-white text-black text-lg font-black px-8 py-3 flex items-center justify-center gap-2 rounded-2xl shadow-2xl disabled:opacity-50"
             >
-              {loading ? "Création..." : "Créer mon compte gratuit"}
+              {loading ? t("register.creating") : t("register.submit")}
             </motion.button>
           </form>
         </motion.div>
 
         <p className="text-xs text-white/40 text-center mt-5">
-          Déjà un compte ?{" "}
+          {t("register.haveAccount")}{" "}
           <Link href="/login" className="text-accent-orange hover:underline">
-            Se connecter
+            {t("login.submit")}
           </Link>
         </p>
       </motion.div>

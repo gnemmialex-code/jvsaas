@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 const USERNAMES = [
   "darkwave.exe", "nxght_47", "soleil.rx", "acidrain_23", "cloudy.drxp",
@@ -45,6 +46,7 @@ let counter = 0;
 const ROTATE_MS = 5_000;
 
 export default function TrustNotification() {
+  const { t } = useI18n();
   const [notif, setNotif] = useState<{ id: number; username: string; count: number } | null>(null);
 
   useEffect(() => {
@@ -91,9 +93,9 @@ export default function TrustNotification() {
             <ShoppingCart className="w-5 h-5 sm:w-4 sm:h-4 flex-shrink-0" stroke="url(#cartGreenGradient)" strokeWidth={2.5} />
             <p className="text-white/80 text-sm sm:text-xs">
               <span className="font-semibold text-white">@{notif.username}</span>{" "}
-              vient de générer à l&apos;instant :{" "}
+              {t("trust.justGenerated")}{" "}
               <span className="gradient-text-neon-green font-bold">
-                {notif.count} Image{notif.count > 1 ? "s" : ""}{" "}de GTA&nbsp;5
+                {notif.count} {t(notif.count > 1 ? "trust.imagesPlural" : "trust.imageSingular")}
               </span>
             </p>
           </motion.div>

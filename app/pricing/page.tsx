@@ -7,142 +7,7 @@ import { Check, Zap, Loader2, Sparkles, Crown, Infinity as InfinityIcon, ShieldC
 import toast from "react-hot-toast";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-
-const PLANS = [
-  {
-    id: "plan_essentiel",
-    name: "Essentiel",
-    icon: <Zap className="w-5 h-5" />,
-    credits: "2 500",
-    creditsRaw: 2500,
-    priceMonthly: 9.90,
-    color: "border-surface-border",
-    badge: null,
-    tagline: "Pour découvrir l'IA",
-    highlights: [
-      { label: "Qualité", value: "HD 1080p" },
-      { label: "Vitesse", value: "~45-60 sec" },
-      { label: "File d'attente", value: "Partagée" },
-    ],
-    features: [
-      "Génération photo uniquement",
-      "Qualité HD 1080p",
-      "Génération par description (sans univers)",
-      "Vitesse standard (~45-60 secondes)",
-      "File d'attente partagée",
-      "Historique limité (30 images)",
-      "Sans watermark",
-      "Support standard (réponse 48-72h)",
-      "Téléchargement en 1080p",
-    ],
-  },
-  {
-    id: "plan_pro",
-    name: "Pro",
-    icon: <Sparkles className="w-5 h-5" />,
-    credits: "10 250",
-    creditsRaw: 10250,
-    bonusCredits: 1000,
-    priceMonthly: 19.90,
-    color: "border-accent-violet",
-    badge: "Populaire",
-    tagline: "Pour créer plus & mieux",
-    highlights: [
-      { label: "Qualité", value: "Ultra 4K" },
-      { label: "Vitesse", value: "~20-30 sec" },
-      { label: "File d'attente", value: "Accélérée" },
-    ],
-    features: [
-      "Photo + Vidéo jusqu'à 5 secondes",
-      "Qualité Ultra 4K (upscale x4)",
-      "🔥 Technique Snap Rouge incluse",
-      "4 univers de personnages (GTA 5, Fortnite, Simpsons, Minecraft)",
-      "Vitesse prioritaire (~20-30 secondes)",
-      "File d'attente accélérée",
-      "Historique illimité",
-      "Support prioritaire (réponse sous 24h)",
-      "Partage direct réseaux sociaux",
-      "API basique (100 req/jour)",
-      "Statistiques d'usage détaillées",
-    ],
-  },
-  {
-    id: "plan_ultra",
-    name: "Elite",
-    icon: <Crown className="w-5 h-5" />,
-    credits: "Illimité",
-    creditsRaw: null,
-    priceMonthly: 39.90,
-    color: "border-accent-neon/50",
-    badge: "Meilleure valeur",
-    tagline: "L'expérience sans compromis",
-    highlights: [
-      { label: "Qualité", value: "8K Photoréaliste" },
-      { label: "Vitesse", value: "~10-15 sec" },
-      { label: "File d'attente", value: "Priorité absolue" },
-    ],
-    features: [
-      "Photo + Vidéo 4K jusqu'à 30 secondes",
-      "Qualité Ultra 8K — Photoréalisme maximum",
-      "🔥 Technique Snap Rouge incluse",
-      "Tous les univers de personnages",
-      "Vitesse ultra (~10-15 secondes)",
-      "Priorité absolue — jamais d'attente",
-      "Licence commerciale incluse",
-      "API illimitée (sans restriction)",
-      "Accès bêta en avant-première",
-      "Manager de compte dédié",
-      "Modèles personnalisés sur demande",
-      "Support VIP dédié (réponse < 4h)",
-    ],
-  },
-];
-
-const CREDIT_PACKS = [
-  {
-    id:       "pack_800",
-    credits:  800,
-    price:    9.90,
-    badge:    null,
-    tagline:  "Idéal pour quelques générations supplémentaires",
-    perImage: "~8 images",
-  },
-  {
-    id:       "pack_2000",
-    credits:  2000,
-    price:    19.98,
-    badge:    "Meilleur rapport",
-    tagline:  "Le plus économique — 25% moins cher par crédit",
-    perImage: "~20 images",
-  },
-];
-
-const FAQ = [
-  {
-    q: "Combien vaut un crédit ?",
-    a: "1 image générée = 100 crédits. Pour la vidéo, comptez 200 crédits par seconde de vidéo générée.",
-  },
-  {
-    q: "Les crédits non utilisés sont-ils reportés ?",
-    a: "Oui, les crédits mensuels non utilisés sont reportés au mois suivant tant que votre abonnement est actif.",
-  },
-  {
-    q: "Puis-je changer de plan à tout moment ?",
-    a: "Oui, vous pouvez upgrader ou downgrader votre plan à n'importe quel moment. Le changement prend effet immédiatement.",
-  },
-  {
-    q: "Combien de temps dure une génération ?",
-    a: "En moyenne 20 à 40 secondes selon la complexité du modèle. Les plans Pro et Ultra bénéficient d'une file d'attente prioritaire.",
-  },
-  {
-    q: "Puis-je utiliser les images commercialement ?",
-    a: "Les images sont pour usage personnel et créatif uniquement. L'usage commercial nécessite une licence spéciale — contactez-nous.",
-  },
-  {
-    q: "Comment fonctionne le remboursement ?",
-    a: "Nous offrons un remboursement intégral sous 48h si vous n'êtes pas satisfait de vos premières générations.",
-  },
-];
+import { useI18n } from "@/lib/i18n";
 
 function formatPrice(price: number) {
   return price.toFixed(2).replace(".", ",") + "€";
@@ -150,9 +15,134 @@ function formatPrice(price: number) {
 
 export default function PricingPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [loadingPack, setLoadingPack] = useState<string | null>(null);
+
+  const PLANS = [
+    {
+      id: "plan_essentiel",
+      name: t("pricing.plan.essentiel.name"),
+      icon: <Zap className="w-5 h-5" />,
+      credits: "2 500",
+      creditsRaw: 2500,
+      priceMonthly: 9.90,
+      color: "border-surface-border",
+      badge: null as string | null,
+      elite: false,
+      popular: false,
+      tagline: t("pricing.plan.essentiel.tagline"),
+      highlights: [
+        { label: t("pricing.hl.quality"), value: "HD 1080p" },
+        { label: t("pricing.hl.speed"), value: "~45-60 sec" },
+        { label: t("pricing.hl.queue"), value: t("pricing.plan.essentiel.queue") },
+      ],
+      features: [
+        t("pricing.plan.essentiel.f1"),
+        t("pricing.plan.essentiel.f2"),
+        t("pricing.plan.essentiel.f3"),
+        t("pricing.plan.essentiel.f4"),
+        t("pricing.plan.essentiel.f5"),
+        t("pricing.plan.essentiel.f6"),
+        t("pricing.plan.essentiel.f7"),
+        t("pricing.plan.essentiel.f8"),
+        t("pricing.plan.essentiel.f9"),
+      ],
+    },
+    {
+      id: "plan_pro",
+      name: t("pricing.plan.pro.name"),
+      icon: <Sparkles className="w-5 h-5" />,
+      credits: "10 250",
+      creditsRaw: 10250,
+      bonusCredits: 1000,
+      priceMonthly: 19.90,
+      color: "border-accent-violet",
+      badge: t("pricing.badge.popular"),
+      elite: false,
+      popular: true,
+      tagline: t("pricing.plan.pro.tagline"),
+      highlights: [
+        { label: t("pricing.hl.quality"), value: "Ultra 4K" },
+        { label: t("pricing.hl.speed"), value: "~20-30 sec" },
+        { label: t("pricing.hl.queue"), value: t("pricing.plan.pro.queue") },
+      ],
+      features: [
+        t("pricing.plan.pro.f1"),
+        t("pricing.plan.pro.f2"),
+        t("pricing.plan.pro.f3"),
+        t("pricing.plan.pro.f4"),
+        t("pricing.plan.pro.f5"),
+        t("pricing.plan.pro.f6"),
+        t("pricing.plan.pro.f7"),
+        t("pricing.plan.pro.f8"),
+        t("pricing.plan.pro.f9"),
+        t("pricing.plan.pro.f10"),
+        t("pricing.plan.pro.f11"),
+      ],
+    },
+    {
+      id: "plan_ultra",
+      name: t("pricing.plan.elite.name"),
+      icon: <Crown className="w-5 h-5" />,
+      credits: t("pricing.unlimited"),
+      creditsRaw: null,
+      priceMonthly: 39.90,
+      color: "border-accent-neon/50",
+      badge: t("pricing.badge.bestValue"),
+      elite: true,
+      popular: false,
+      tagline: t("pricing.plan.elite.tagline"),
+      highlights: [
+        { label: t("pricing.hl.quality"), value: "8K" },
+        { label: t("pricing.hl.speed"), value: "~10-15 sec" },
+        { label: t("pricing.hl.queue"), value: t("pricing.plan.elite.queue") },
+      ],
+      features: [
+        t("pricing.plan.elite.f1"),
+        t("pricing.plan.elite.f2"),
+        t("pricing.plan.elite.f3"),
+        t("pricing.plan.elite.f4"),
+        t("pricing.plan.elite.f5"),
+        t("pricing.plan.elite.f6"),
+        t("pricing.plan.elite.f7"),
+        t("pricing.plan.elite.f8"),
+        t("pricing.plan.elite.f9"),
+        t("pricing.plan.elite.f10"),
+        t("pricing.plan.elite.f11"),
+        t("pricing.plan.elite.f12"),
+      ],
+    },
+  ];
+
+  const CREDIT_PACKS = [
+    {
+      id: "pack_800",
+      credits: 800,
+      price: 9.90,
+      badge: null as string | null,
+      tagline: t("pricing.pack.800.tagline"),
+      perImage: t("pricing.pack.800.perImage"),
+    },
+    {
+      id: "pack_2000",
+      credits: 2000,
+      price: 19.98,
+      badge: t("pricing.pack.bestRatio"),
+      tagline: t("pricing.pack.2000.tagline"),
+      perImage: t("pricing.pack.2000.perImage"),
+    },
+  ];
+
+  const FAQ = [
+    { q: t("pricing.faq.q1"), a: t("pricing.faq.a1") },
+    { q: t("pricing.faq.q2"), a: t("pricing.faq.a2") },
+    { q: t("pricing.faq.q3"), a: t("pricing.faq.a3") },
+    { q: t("pricing.faq.q4"), a: t("pricing.faq.a4") },
+    { q: t("pricing.faq.q5"), a: t("pricing.faq.a5") },
+    { q: t("pricing.faq.q6"), a: t("pricing.faq.a6") },
+  ];
 
   const handleTopup = async (packId: string) => {
     setLoadingPack(packId);
@@ -165,17 +155,17 @@ export default function PricingPage() {
       const data = await res.json();
 
       if (res.status === 401) {
-        toast("Connectez-vous pour acheter des crédits", { icon: "🔒" });
+        toast(t("pricing.toast.loginBuy"), { icon: "🔒" });
         router.push("/login?redirect=/pricing");
         return;
       }
       if (!res.ok || !data.url) {
-        toast.error(data.error ?? "Erreur lors du paiement");
+        toast.error(data.error ?? t("pricing.toast.payError"));
         return;
       }
       window.location.href = data.url;
     } catch {
-      toast.error("Erreur de connexion");
+      toast.error(t("pricing.toast.connError"));
     } finally {
       setLoadingPack(null);
     }
@@ -192,17 +182,17 @@ export default function PricingPage() {
       const data = await res.json();
 
       if (res.status === 401) {
-        toast("Connectez-vous pour souscrire à un plan", { icon: "🔒" });
+        toast(t("pricing.toast.loginSubscribe"), { icon: "🔒" });
         router.push("/login?redirect=/pricing");
         return;
       }
       if (!res.ok || !data.url) {
-        toast.error(data.error ?? "Erreur lors de la création de la session de paiement");
+        toast.error(data.error ?? t("pricing.toast.sessionError"));
         return;
       }
       window.location.href = data.url;
     } catch {
-      toast.error("Erreur de connexion");
+      toast.error(t("pricing.toast.connError"));
     } finally {
       setLoadingPlan(null);
     }
@@ -257,10 +247,10 @@ export default function PricingPage() {
           className="text-center mb-12"
         >
           <h1 className="text-5xl sm:text-6xl font-black mb-4">
-            Choisissez votre <span className="gradient-text">plan</span>
+            {t("pricing.header.title1")} <span className="gradient-text">{t("pricing.header.title2")}</span>
           </h1>
           <p className="text-white/50 text-xl max-w-xl mx-auto mb-8">
-            Des crédits renouvelés chaque mois pour générer vos personnages et vidéos.
+            {t("pricing.header.subtitle")}
           </p>
 
           {/* Toggle mensuel / annuel */}
@@ -273,7 +263,7 @@ export default function PricingPage() {
                   : "text-white/50 hover:text-white"
               }`}
             >
-              Mensuel
+              {t("pricing.billing.monthly")}
             </button>
             <button
               onClick={() => setBilling("yearly")}
@@ -283,7 +273,7 @@ export default function PricingPage() {
                   : "text-white/50 hover:text-white"
               }`}
             >
-              Annuel
+              {t("pricing.billing.yearly")}
               <span className="bg-green-500/20 text-green-400 text-xs px-2 py-0.5 rounded-full font-bold">
                 −17%
               </span>
@@ -308,12 +298,12 @@ export default function PricingPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 className={`relative card border-2 ${plan.color} flex flex-col ${
-                  plan.badge === "Populaire" ? "shadow-violet scale-[1.02]" : ""
+                  plan.popular ? "shadow-violet scale-[1.02]" : ""
                 }`}
               >
                 {plan.badge && (
                   <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-white text-xs px-4 py-1 rounded-full font-bold whitespace-nowrap ${
-                    plan.badge === "Populaire" ? "bg-accent-violet" : "bg-gradient-violet-neon"
+                    plan.popular ? "bg-accent-violet" : "bg-gradient-violet-neon"
                   }`}>
                     {plan.badge}
                   </div>
@@ -322,7 +312,7 @@ export default function PricingPage() {
                 {/* Nom & icône */}
                 <div className="flex items-center gap-2 mb-1">
                   <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-                    plan.name === "Elite"
+                    plan.elite
                       ? "bg-accent-neon/15 text-accent-neon"
                       : "bg-accent-violet/15 text-accent-violet"
                   }`}>
@@ -336,11 +326,11 @@ export default function PricingPage() {
                 <div className="mb-2">
                   <div className="flex items-end gap-1">
                     <span className="text-4xl font-black">{formatPrice(displayPrice)}</span>
-                    <span className="text-white/40 text-sm mb-1">/mois</span>
+                    <span className="text-white/40 text-sm mb-1">{t("pricing.perMonth")}</span>
                   </div>
                   {displayTotal && (
                     <p className="text-white/30 text-xs mt-1">
-                      soit {formatPrice(displayTotal)} facturés annuellement
+                      {t("pricing.billedYearly").replace("{total}", formatPrice(displayTotal))}
                     </p>
                   )}
                 </div>
@@ -350,18 +340,18 @@ export default function PricingPage() {
                   {plan.creditsRaw === null ? (
                     <div className="flex items-center justify-center gap-2">
                       <InfinityIcon className="w-8 h-8 text-accent-violet" />
-                      <span className="text-2xl font-black gradient-text">Illimité</span>
+                      <span className="text-2xl font-black gradient-text">{t("pricing.unlimited")}</span>
                     </div>
                   ) : (
                     <span className="text-4xl font-black gradient-text">{plan.credits}</span>
                   )}
-                  <p className="text-white/50 text-sm mt-1">crédits / mois</p>
+                  <p className="text-white/50 text-sm mt-1">{t("pricing.creditsPerMonth")}</p>
 
                   {/* Badge bonus — uniquement si le plan a des crédits offerts */}
                   {"bonusCredits" in plan && plan.bonusCredits && (
                     <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/15 border border-green-500/30 text-green-400 text-xs font-bold">
                       <span>🎁</span>
-                      + {plan.bonusCredits.toLocaleString("fr-FR")} crédits offerts
+                      {t("pricing.bonusCredits").replace("{n}", plan.bonusCredits.toLocaleString("fr-FR"))}
                     </div>
                   )}
                 </div>
@@ -372,7 +362,7 @@ export default function PricingPage() {
                     <div key={h.label} className="bg-surface-hover rounded-lg px-2 py-2 text-center">
                       <p className="text-white/35 text-[10px] uppercase tracking-wide mb-0.5">{h.label}</p>
                       <p className={`text-xs font-bold leading-tight ${
-                        plan.name === "Elite" ? "text-accent-neon" : "text-accent-violet"
+                        plan.elite ? "text-accent-neon" : "text-accent-violet"
                       }`}>{h.value}</p>
                     </div>
                   ))}
@@ -383,7 +373,7 @@ export default function PricingPage() {
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-2 text-sm text-white/70">
                       <Check className={`w-4 h-4 flex-shrink-0 mt-0.5 ${
-                        plan.name === "Elite" ? "text-accent-neon" : "text-accent-violet"
+                        plan.elite ? "text-accent-neon" : "text-accent-violet"
                       }`} />
                       {feature}
                     </li>
@@ -394,9 +384,9 @@ export default function PricingPage() {
                   onClick={() => handleSubscribe(plan)}
                   disabled={!!loadingPlan}
                   className={`w-full py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all ${
-                    plan.name === "Elite"
+                    plan.elite
                       ? "bg-gradient-to-r from-accent-neon/80 to-accent-violet text-white hover:opacity-90"
-                      : plan.badge === "Populaire"
+                      : plan.popular
                       ? "btn-primary"
                       : "btn-secondary"
                   }`}
@@ -405,8 +395,8 @@ export default function PricingPage() {
                     <Loader2 className="w-4 h-4 animate-spin" />
                   ) : (
                     <>
-                      {plan.name === "Elite" ? <Crown className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
-                      {plan.name === "Elite" ? "Accès Elite" : "Commencer"}
+                      {plan.elite ? <Crown className="w-4 h-4" /> : <Zap className="w-4 h-4" />}
+                      {plan.elite ? t("pricing.cta.elite") : t("pricing.cta.start")}
                     </>
                   )}
                 </button>
@@ -414,7 +404,7 @@ export default function PricingPage() {
                 {/* Garantie sous le bouton */}
                 <p className="flex items-center justify-center gap-1.5 mt-3 text-green-400/80 text-xs font-medium">
                   <ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" />
-                  Satisfait ou remboursé sous 48h
+                  {t("pricing.guarantee48")}
                 </p>
               </motion.div>
             );
@@ -432,13 +422,13 @@ export default function PricingPage() {
           <div className="text-center mb-7">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent-violet/10 border border-accent-violet/25 text-accent-violet text-sm font-semibold mb-4">
               <Plus className="w-3.5 h-3.5" />
-              Recharge de crédits
+              {t("pricing.topup.pill")}
             </div>
             <h2 className="text-2xl sm:text-3xl font-black mb-2">
-              Besoin de plus de crédits ?
+              {t("pricing.topup.title")}
             </h2>
             <p className="text-white/50 max-w-md mx-auto text-sm">
-              Rechargez à la demande sans changer votre abonnement. Les crédits s&apos;ajoutent instantanément à votre solde.
+              {t("pricing.topup.subtitle")}
             </p>
           </div>
 
@@ -467,13 +457,13 @@ export default function PricingPage() {
                     <p className="text-3xl font-black gradient-text">
                       {pack.credits.toLocaleString("fr-FR")}
                     </p>
-                    <p className="text-white/45 text-sm">crédits</p>
+                    <p className="text-white/45 text-sm">{t("pricing.credits")}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-black">
                       {pack.price.toFixed(2).replace(".", ",")}€
                     </p>
-                    <p className="text-white/35 text-xs">paiement unique</p>
+                    <p className="text-white/35 text-xs">{t("pricing.oneTime")}</p>
                   </div>
                 </div>
 
@@ -481,11 +471,11 @@ export default function PricingPage() {
                 <div className="space-y-1.5 text-sm text-white/55">
                   <div className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-accent-violet flex-shrink-0" />
-                    <span>{pack.perImage} générées</span>
+                    <span>{t("pricing.pack.generated").replace("{n}", pack.perImage)}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-accent-violet flex-shrink-0" />
-                    <span>Ajout immédiat à votre solde</span>
+                    <span>{t("pricing.pack.instant")}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="w-3.5 h-3.5 text-accent-violet flex-shrink-0" />
@@ -506,7 +496,7 @@ export default function PricingPage() {
                   ) : (
                     <>
                       <Plus className="w-4 h-4" />
-                      Acheter {pack.credits.toLocaleString("fr-FR")} crédits
+                      {t("pricing.pack.buy").replace("{n}", pack.credits.toLocaleString("fr-FR"))}
                     </>
                   )}
                 </button>
@@ -516,7 +506,7 @@ export default function PricingPage() {
 
           {/* Note abonnement requis */}
           <p className="text-center text-white/30 text-xs mt-4">
-            Un compte High Like It est requis. Les crédits achetés ne sont pas remboursables.
+            {t("pricing.topup.note")}
           </p>
         </motion.div>
 
@@ -541,21 +531,21 @@ export default function PricingPage() {
 
               {/* Titre */}
               <h2 className="text-2xl sm:text-3xl font-black text-white">
-                Satisfait ou <span className="text-green-400">remboursé</span>
+                {t("pricing.refund.title1")} <span className="text-green-400">{t("pricing.refund.title2")}</span>
               </h2>
 
               {/* Sous-titre */}
               <p className="text-white/60 text-base max-w-md">
-                Pas convaincu par vos premières générations ? Contactez-nous dans les{" "}
-                <strong className="text-white/85">48 heures</strong> suivant votre souscription et nous vous remboursons intégralement — sans question.
+                {t("pricing.refund.sub1")}{" "}
+                <strong className="text-white/85">{t("pricing.refund.hours")}</strong> {t("pricing.refund.sub2")}
               </p>
 
               {/* Pills de garantie */}
               <div className="flex flex-wrap justify-center gap-3 mt-1">
                 {[
-                  "Remboursement en 48h",
-                  "Sans justificatif",
-                  "100% intégral",
+                  t("pricing.refund.pill1"),
+                  t("pricing.refund.pill2"),
+                  t("pricing.refund.pill3"),
                 ].map((label) => (
                   <span key={label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/25 text-green-400 text-sm font-medium">
                     <Check className="w-3.5 h-3.5 flex-shrink-0" />
@@ -579,8 +569,8 @@ export default function PricingPage() {
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
-              <p className="font-bold text-white">1 image générée</p>
-              <p className="text-white/50 text-sm">= 100 crédits</p>
+              <p className="font-bold text-white">{t("pricing.credit.image")}</p>
+              <p className="text-white/50 text-sm">= 100 {t("pricing.credits")}</p>
             </div>
           </div>
           <div className="card border-accent-neon/20 bg-accent-neon/5 flex items-center gap-4">
@@ -588,8 +578,8 @@ export default function PricingPage() {
               <Zap className="w-6 h-6" />
             </div>
             <div>
-              <p className="font-bold text-white">1 seconde de vidéo</p>
-              <p className="text-white/50 text-sm">= 200 crédits</p>
+              <p className="font-bold text-white">{t("pricing.credit.video")}</p>
+              <p className="text-white/50 text-sm">= 200 {t("pricing.credits")}</p>
             </div>
           </div>
         </motion.div>
@@ -601,20 +591,20 @@ export default function PricingPage() {
           viewport={{ once: true }}
           className="card border-accent-neon/20 bg-accent-neon/5 text-center mb-16"
         >
-          <h3 className="text-2xl font-bold mb-2">Essayez gratuitement</h3>
+          <h3 className="text-2xl font-bold mb-2">{t("pricing.free.title")}</h3>
           <p className="text-white/50 mb-4">
-            Créez un compte et recevez 100 crédits offerts (soit 1 image gratuite). Aucune carte bancaire requise.
+            {t("pricing.free.subtitle")}
           </p>
           <a href="/register" className="btn-primary inline-flex items-center gap-2">
             <Zap className="w-4 h-4" />
-            Créer mon compte gratuit
+            {t("pricing.free.cta")}
           </a>
         </motion.div>
 
         {/* FAQ */}
         <div className="max-w-2xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-10">
-            Questions <span className="gradient-text">fréquentes</span>
+            {t("pricing.faq.title1")} <span className="gradient-text">{t("pricing.faq.title2")}</span>
           </h2>
           <div className="space-y-4">
             {FAQ.map((item, i) => (

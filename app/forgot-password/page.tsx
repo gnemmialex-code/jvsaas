@@ -6,11 +6,13 @@ import { motion } from "framer-motion";
 import { Mail, MailCheck, ArrowLeft } from "lucide-react";
 import Input from "../components/Input";
 import { supabase } from "@/lib/supabase";
+import { useI18n } from "@/lib/i18n";
 
 // Mot de passe oublié : l'utilisateur saisit son e-mail et reçoit un lien qui
 // le ramène sur /reset-password (via /auth/callback) pour choisir un nouveau
 // mot de passe. Même design que la page de connexion.
 export default function ForgotPasswordPage() {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,8 +20,8 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) { setError("Email requis"); return; }
-    if (!/\S+@\S+\.\S+/.test(email)) { setError("Email invalide"); return; }
+    if (!email) { setError(t("login.errorEmailRequired")); return; }
+    if (!/\S+@\S+\.\S+/.test(email)) { setError(t("login.errorEmailInvalid")); return; }
     setError(null);
     setLoading(true);
     try {
@@ -60,32 +62,30 @@ export default function ForgotPasswordPage() {
               <div className="w-14 h-14 rounded-2xl bg-green-500/15 border border-green-500/30 flex items-center justify-center mx-auto mb-4">
                 <MailCheck className="w-7 h-7 text-green-400" />
               </div>
-              <h1 className="text-xl font-bold mb-2">E-mail envoyé !</h1>
+              <h1 className="text-xl font-bold mb-2">{t("forgot.sentTitle")}</h1>
               <p className="text-white/50 text-sm leading-relaxed mb-6">
-                Si un compte existe avec l&apos;adresse <strong className="text-white/80">{email}</strong>,
-                vous allez recevoir un e-mail avec un lien pour créer un nouveau mot de passe.
-                Pensez à vérifier vos spams.
+                {t("forgot.sentBody1")} <strong className="text-white/80">{email}</strong>{t("forgot.sentBody2")}
               </p>
               <Link
                 href="/login"
                 className="inline-flex items-center gap-2 text-accent-orange hover:underline text-sm font-semibold"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Retour à la connexion
+                {t("forgot.backToLogin")}
               </Link>
             </div>
           ) : (
             <>
-              <h1 className="text-xl font-bold mb-1 text-center">Mot de passe oublié</h1>
+              <h1 className="text-xl font-bold mb-1 text-center">{t("forgot.title")}</h1>
               <p className="text-white/45 text-sm text-center mb-6 leading-relaxed">
-                Entrez votre adresse e-mail : nous vous enverrons un lien pour créer un nouveau mot de passe.
+                {t("forgot.subtitle")}
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <Input
-                  label="Email"
+                  label={t("login.email")}
                   type="email"
-                  placeholder="vous@exemple.com"
+                  placeholder={t("login.emailPlaceholder")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   error={error ?? undefined}
@@ -101,7 +101,7 @@ export default function ForgotPasswordPage() {
                   transition={{ duration: 0.6, ease: "easeOut" }}
                   className="w-full bg-white text-black text-lg font-black px-8 py-3 flex items-center justify-center gap-2 rounded-2xl shadow-2xl disabled:opacity-50"
                 >
-                  {loading ? "Envoi…" : "Envoyer le lien"}
+                  {loading ? t("forgot.sending") : t("forgot.sendLink")}
                 </motion.button>
               </form>
             </>
@@ -110,9 +110,9 @@ export default function ForgotPasswordPage() {
 
         {!sent && (
           <p className="text-xs text-white/40 text-center mt-5">
-            Vous vous en souvenez finalement ?{" "}
+            {t("forgot.remember")}{" "}
             <Link href="/login" className="text-accent-orange hover:underline">
-              Se connecter
+              {t("login.submit")}
             </Link>
           </p>
         )}

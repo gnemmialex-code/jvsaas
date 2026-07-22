@@ -1,7 +1,11 @@
+"use client";
+
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 export default function Footer() {
+  const { t } = useI18n();
   return (
     <footer className="relative z-10 border-t border-surface-border bg-surface/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
@@ -14,19 +18,18 @@ export default function Footer() {
               <span className="font-black text-lg tracking-tight">High<span className="gradient-text">lights</span></span>
             </Link>
             <p className="text-white/50 text-sm leading-relaxed max-w-xs">
-              La plateforme de transformation photo par IA Ultra HD la plus avancée.
-              Résultats 4K en quelques secondes.
+              {t("footer.tagline")}
             </p>
           </div>
 
           {/* Links — fond noir flouté pour rester lisibles sur le fond animé */}
           <div className="rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 p-5">
-            <h4 className="font-semibold mb-4 text-white/80">Produit</h4>
+            <h4 className="font-semibold mb-4 text-white/80">{t("footer.product")}</h4>
             <ul className="space-y-2">
               {[
-                { href: "/upload", label: "Générer" },
-                { href: "/pricing", label: "Tarifs" },
-                { href: "/dashboard", label: "Dashboard" },
+                { href: "/upload", label: t("footer.link.generate") },
+                { href: "/pricing", label: t("footer.link.pricing") },
+                { href: "/dashboard", label: t("footer.link.dashboard") },
               ].map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="text-white/50 hover:text-white text-sm transition-colors">
@@ -38,12 +41,12 @@ export default function Footer() {
           </div>
 
           <div className="rounded-2xl bg-black/60 backdrop-blur-md border border-white/10 p-5">
-            <h4 className="font-semibold mb-4 text-white/80">Légal</h4>
+            <h4 className="font-semibold mb-4 text-white/80">{t("footer.legal")}</h4>
             <ul className="space-y-2">
               {[
-                { href: "/terms", label: "CGU" },
-                { href: "/privacy", label: "Confidentialité" },
-                { href: "/consent", label: "Consentement" },
+                { href: "/terms", label: t("footer.link.terms") },
+                { href: "/privacy", label: t("footer.link.privacy") },
+                { href: "/consent", label: t("footer.link.consent") },
               ].map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="text-white/50 hover:text-white text-sm transition-colors">
@@ -63,14 +66,12 @@ export default function Footer() {
             </div>
             <div className="space-y-2">
               <p className="text-white/60 text-xs font-semibold uppercase tracking-widest">
-                Avertissement — Limitation de responsabilité
+                {t("footer.disclaimer.title")}
               </p>
               <p className="text-white/38 text-xs leading-relaxed">
-                High Like It est un outil de divertissement basé sur l&apos;intelligence artificielle.
-                Les images générées via notre plateforme sont destinées à un usage strictement personnel et récréatif.
-                <strong className="text-white/55 font-semibold"> High Like It ne saurait être tenu responsable, sous quelque prétexte que ce soit, des actions, usages ou diffusions réalisés par ses utilisateurs à la suite des générations effectuées sur la plateforme.</strong>{" "}
-                Toute utilisation à des fins illégales, diffamatoires, commerciales non autorisées, ou portant atteinte aux droits d&apos;un tiers engage la seule et entière responsabilité de l&apos;utilisateur.
-                L&apos;utilisation de notre service vaut acceptation explicite de ces conditions.
+                {t("footer.disclaimer.p1")}{" "}
+                <strong className="text-white/55 font-semibold">{t("footer.disclaimer.strong")}</strong>{" "}
+                {t("footer.disclaimer.p2")}
               </p>
             </div>
           </div>
@@ -78,10 +79,10 @@ export default function Footer() {
 
         <div className="border-t border-surface-border mt-6 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-white/30 text-sm">
-            © 2026 High Like It. Tous droits réservés.
+            {t("footer.rights")}
           </p>
           <p className="text-white/20 text-xs">
-            Usage créatif uniquement. Respect des droits à l&apos;image requis.
+            {t("footer.creative")}
           </p>
         </div>
       </div>

@@ -476,7 +476,7 @@ function HeroSection() {
             <motion.div whileHover={{ scale: 1.06 }} whileTap={{ scale: 0.96 }} className="badge-neon-rainbow">
               <span className="px-4 py-1.5">
                 <span className="gradient-text-neon-rainbow text-xs sm:text-sm font-bold tracking-wide whitespace-nowrap">
-                  ✨ Nouvelle version 2.0
+                  {t("hero.badge")}
                 </span>
               </span>
             </motion.div>

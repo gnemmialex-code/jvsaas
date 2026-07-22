@@ -7,11 +7,13 @@ import { Lock, Eye, EyeOff, Loader2, KeyRound } from "lucide-react";
 import toast from "react-hot-toast";
 import Input from "../components/Input";
 import { supabase } from "@/lib/supabase";
+import { useI18n } from "@/lib/i18n";
 
 // Page d'arrivée du lien "mot de passe oublié" : le lien de l'e-mail passe par
 // /auth/callback qui ouvre une session de récupération, puis redirige ici pour
 // choisir un nouveau mot de passe. Même design que la page de connexion.
 export default function ResetPasswordPage() {
+  const { t } = useI18n();
   const [checking, setChecking] = useState(true);
   const [hasSession, setHasSession] = useState(false);
   const [password, setPassword] = useState("");
@@ -36,8 +38,8 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errs: Record<string, string> = {};
-    if (password.length < 8) errs.password = "8 caractères minimum";
-    if (password !== confirmPassword) errs.confirmPassword = "Les mots de passe ne correspondent pas";
+    if (password.length < 8) errs.password = t("register.errorMinChars");
+    if (password !== confirmPassword) errs.confirmPassword = t("register.errorPasswordMismatch");
     if (Object.keys(errs).length > 0) { setErrors(errs); return; }
     setErrors({});
     setSaving(true);
@@ -46,12 +48,12 @@ export default function ResetPasswordPage() {
       if (error) {
         toast.error(
           error.message.toLowerCase().includes("different")
-            ? "Le nouveau mot de passe doit être différent de l'ancien"
-            : "Impossible de modifier le mot de passe — le lien a peut-être expiré"
+            ? t("reset.errorSame")
+            : t("reset.errorExpired")
         );
         return;
       }
-      toast.success("Mot de passe modifié ! Vous êtes connecté.");
+      toast.success(t("reset.success"));
       // Connecté → direction le dashboard
       window.location.href = "/dashboard";
     } finally {
@@ -87,28 +89,27 @@ export default function ResetPasswordPage() {
               <div className="w-14 h-14 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto mb-4">
                 <KeyRound className="w-7 h-7 text-red-400" />
               </div>
-              <h1 className="text-xl font-bold mb-2">Lien invalide ou expiré</h1>
+              <h1 className="text-xl font-bold mb-2">{t("reset.invalidTitle")}</h1>
               <p className="text-white/50 text-sm leading-relaxed mb-6">
-                Ce lien de réinitialisation n&apos;est plus valable. Demandez-en un nouveau,
-                il ne faut que quelques secondes.
+                {t("reset.invalidBody")}
               </p>
               <Link href="/forgot-password" className="btn-primary-orange inline-flex items-center gap-2 px-5 py-2.5 text-sm font-bold">
-                Recevoir un nouveau lien
+                {t("reset.newLink")}
               </Link>
             </div>
           ) : (
             <>
-              <h1 className="text-xl font-bold mb-1 text-center">Nouveau mot de passe</h1>
+              <h1 className="text-xl font-bold mb-1 text-center">{t("reset.title")}</h1>
               <p className="text-white/45 text-sm text-center mb-6 leading-relaxed">
-                Choisissez votre nouveau mot de passe (8 caractères minimum).
+                {t("reset.subtitle")}
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="relative">
                   <Input
-                    label="Nouveau mot de passe"
+                    label={t("reset.newPassword")}
                     type={showPassword ? "text" : "password"}
-                    placeholder="8 caractères minimum"
+                    placeholder={t("register.minChars")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     error={errors.password}
@@ -125,9 +126,9 @@ export default function ResetPasswordPage() {
                 </div>
 
                 <Input
-                  label="Confirmer le mot de passe"
+                  label={t("register.confirmPassword")}
                   type={showPassword ? "text" : "password"}
-                  placeholder="Répétez votre mot de passe"
+                  placeholder={t("register.repeatPassword")}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   error={errors.confirmPassword}
@@ -143,7 +144,7 @@ export default function ResetPasswordPage() {
                   transition={{ duration: 0.6, ease: "easeOut" }}
                   className="w-full bg-white text-black text-lg font-black px-8 py-3 flex items-center justify-center gap-2 rounded-2xl shadow-2xl disabled:opacity-50"
                 >
-                  {saving ? "Modification…" : "Valider le nouveau mot de passe"}
+                  {saving ? t("reset.saving") : t("reset.submit")}
                 </motion.button>
               </form>
             </>
