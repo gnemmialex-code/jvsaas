@@ -444,7 +444,6 @@ function LiveGenerationsCounter() {
 
 function HeroSection() {
   const { t } = useI18n();
-  const brand = t("hero.title.brand");
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 py-16 text-center">
@@ -461,9 +460,7 @@ function HeroSection() {
               >
                 <Link href="/dashboard" className="contents">
                   {t("hero.title.line1")}{" "}
-                  <span className="gradient-text-orange-subtle">{t("hero.title.line1Accent")}</span>{" "}
-                  <span className="gradient-text-orange-subtle">{brand}</span>{" "}
-                  <span className="gradient-text-orange-subtle">2.0</span>
+                  <span className="gradient-text-orange-subtle">{t("hero.title.line1Accent")}</span>
                 </Link>
               </motion.h1>
             </div>
@@ -551,6 +548,7 @@ function StatsSection() {
 }
 
 function GallerySection() {
+  const { t } = useI18n();
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -589,10 +587,10 @@ function GallerySection() {
         {/* Titre de la section avant/après */}
         <div className="text-center mb-6 sm:mb-10 px-2">
           <h2 className="text-xl sm:text-4xl lg:text-5xl font-black text-white leading-tight">
-            Avant <span className="gradient-text-orange-subtle">/</span> Après notre IA
+            {t("gallery.before")} <span className="gradient-text-orange-subtle">/</span> {t("gallery.after")}
           </h2>
           <p className="text-white/50 text-[11px] sm:text-base mt-2">
-            Glissez le curseur pour découvrir la transformation
+            {t("gallery.subtitle")}
           </p>
         </div>
         <ExamplesGallery />

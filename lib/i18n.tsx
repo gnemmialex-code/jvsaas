@@ -29,23 +29,27 @@ const translations: Record<Locale, Dict> = {
     "nav.profile": "Mon profil",
     "nav.cta": "Commencer Maintenant",
 
-    "hero.title.line1": "La plateforme n°1 de transformation photo",
-    "hero.title.line1Accent": "IA",
+    "hero.title.line1": "Transforme n'importe quelle photo en personnage de",
+    "hero.title.line1Accent": "GTA 5 & GTA 6",
     "hero.title.brand": "High Like It",
-    "hero.subtitle": "Deviens le héros de ton propre jeu vidéo.",
+    "hero.subtitle": "Envoie ta photo et deviens enfin le héros de ta propre histoire Grand Theft Auto V — Grand Theft Auto VI bientôt disponible.",
     "hero.cta": "Commencer Maintenant",
     "hero.liveCounter": "personnes ont généré une image aujourd'hui avec",
 
     "stats.upload.title": "Upload",
     "stats.upload.desc": "Importe une photo de ton visage (JPG, PNG, PDF, HEIC)",
     "stats.customize.title": "Personnalise",
-    "stats.customize.desc": "Crée ton personnage au choix en moins de 30 secondes.",
+    "stats.customize.desc": "Choisis ton style GTA 5 ou GTA 6 en moins de 30 secondes.",
     "stats.download.title": "Télécharge",
-    "stats.download.desc": "Télécharge ton image ultra-réaliste en 4K ou en 1080p.",
+    "stats.download.desc": "Télécharge ton personnage ultra-réaliste en 4K ou en 1080p.",
+
+    "gallery.before": "Avant",
+    "gallery.after": "Après notre IA",
+    "gallery.subtitle": "Glisse le curseur pour découvrir la transformation GTA",
 
     "faq.title": "FAQ",
     "faq.q1": "Comment fonctionne la transformation en personnage ?",
-    "faq.a1": "Uploadez votre photo, choisissez un univers (GTA 5, Fortnite, Simpsons ou Minecraft) et notre pipeline IA vous transforme en personnage tout en gardant votre ressemblance, puis upscale le résultat en 4K (RealESRGAN). Tout se passe en moins de 30 secondes sur nos serveurs.",
+    "faq.a1": "Uploadez votre photo, choisissez votre univers (GTA 5 ou GTA 6) et notre pipeline IA vous transforme en personnage tout en gardant votre ressemblance, puis upscale le résultat en 4K (RealESRGAN). Tout se passe en moins de 30 secondes sur nos serveurs.",
     "faq.q2": "Mes photos sont-elles conservées ?",
     "faq.a2": "Non. Votre photo originale est automatiquement supprimée de nos serveurs après traitement. Seule l'image générée est stockée dans votre historique, et vous pouvez la supprimer à tout moment.",
     "faq.q3": "Puis-je utiliser n'importe quelle photo ?",
@@ -81,7 +85,8 @@ const translations: Record<Locale, Dict> = {
     "nav.profile": "My profile",
     "nav.cta": "Get Started Now",
 
-    "hero.title.line1": "Make your dreams possible with",
+    "hero.title.line1": "Turn any photo into a character from",
+    "hero.title.line1Accent": "GTA 5 & GTA 6",
     "hero.title.brand": "High Like It",
     "hero.subtitle": "Generate your photo and finally become the hero of your own Grand Theft Auto V story — Grand Theft Auto VI coming soon.",
     "hero.cta": "Get Started Now",
@@ -90,13 +95,17 @@ const translations: Record<Locale, Dict> = {
     "stats.upload.title": "Upload",
     "stats.upload.desc": "Upload a photo of your face (JPG, PNG, PDF, HEIC)",
     "stats.customize.title": "Customize",
-    "stats.customize.desc": "Create your character of choice in under 30 seconds.",
+    "stats.customize.desc": "Pick your GTA 5 or GTA 6 style in under 30 seconds.",
     "stats.download.title": "Download",
-    "stats.download.desc": "Download your ultra-realistic image in 4K or 1080p.",
+    "stats.download.desc": "Download your ultra-realistic character in 4K or 1080p.",
+
+    "gallery.before": "Before",
+    "gallery.after": "After our AI",
+    "gallery.subtitle": "Drag the slider to reveal the GTA transformation",
 
     "faq.title": "FAQ",
     "faq.q1": "How does the character transformation work?",
-    "faq.a1": "Upload your photo, choose a universe (GTA 5, Fortnite, Simpsons or Minecraft) and our AI pipeline turns you into a character while keeping your likeness, then upscales the result to 4K (RealESRGAN). It all happens in under 30 seconds on our servers.",
+    "faq.a1": "Upload your photo, choose your universe (GTA 5 or GTA 6) and our AI pipeline turns you into a character while keeping your likeness, then upscales the result to 4K (RealESRGAN). It all happens in under 30 seconds on our servers.",
     "faq.q2": "Are my photos kept?",
     "faq.a2": "No. Your original photo is automatically deleted from our servers after processing. Only the generated image is stored in your history, and you can delete it at any time.",
     "faq.q3": "Can I use any photo?",
@@ -132,7 +141,8 @@ const translations: Record<Locale, Dict> = {
     "nav.profile": "Mi perfil",
     "nav.cta": "Empezar Ahora",
 
-    "hero.title.line1": "Haz tus sueños posibles con",
+    "hero.title.line1": "Convierte cualquier foto en un personaje de",
+    "hero.title.line1Accent": "GTA 5 & GTA 6",
     "hero.title.brand": "High Like It",
     "hero.subtitle": "Genera tu foto y conviértete por fin en protagonista de tu propia historia de Grand Theft Auto V, y pronto de Grand Theft Auto VI.",
     "hero.cta": "Empezar Ahora",
@@ -141,13 +151,17 @@ const translations: Record<Locale, Dict> = {
     "stats.upload.title": "Sube",
     "stats.upload.desc": "Sube una foto de tu cara (JPG, PNG, PDF, HEIC)",
     "stats.customize.title": "Personaliza",
-    "stats.customize.desc": "Crea el personaje que quieras en menos de 30 segundos.",
+    "stats.customize.desc": "Elige tu estilo GTA 5 o GTA 6 en menos de 30 segundos.",
     "stats.download.title": "Descarga",
-    "stats.download.desc": "Descarga tu imagen ultra realista en 4K o 1080p.",
+    "stats.download.desc": "Descarga tu personaje ultra realista en 4K o 1080p.",
+
+    "gallery.before": "Antes",
+    "gallery.after": "Después de nuestra IA",
+    "gallery.subtitle": "Desliza el cursor para descubrir la transformación GTA",
 
     "faq.title": "FAQ",
     "faq.q1": "¿Cómo funciona la transformación en personaje?",
-    "faq.a1": "Sube tu foto, elige un universo (GTA 5, Fortnite, Simpsons o Minecraft) y nuestro pipeline de IA te transforma en personaje conservando tu parecido, luego mejora el resultado a 4K (RealESRGAN). Todo ocurre en menos de 30 segundos en nuestros servidores.",
+    "faq.a1": "Sube tu foto, elige tu universo (GTA 5 o GTA 6) y nuestro pipeline de IA te transforma en personaje conservando tu parecido, luego mejora el resultado a 4K (RealESRGAN). Todo ocurre en menos de 30 segundos en nuestros servidores.",
     "faq.q2": "¿Se conservan mis fotos?",
     "faq.a2": "No. Tu foto original se elimina automáticamente de nuestros servidores tras el procesamiento. Solo la imagen generada se guarda en tu historial, y puedes eliminarla cuando quieras.",
     "faq.q3": "¿Puedo usar cualquier foto?",
@@ -183,7 +197,8 @@ const translations: Record<Locale, Dict> = {
     "nav.profile": "Mein Profil",
     "nav.cta": "Jetzt Starten",
 
-    "hero.title.line1": "Verwirkliche deine Träume mit",
+    "hero.title.line1": "Verwandle jedes Foto in eine Figur aus",
+    "hero.title.line1Accent": "GTA 5 & GTA 6",
     "hero.title.brand": "High Like It",
     "hero.subtitle": "Erstelle dein Foto und werde endlich zum Helden deiner eigenen Grand Theft Auto V Geschichte — Grand Theft Auto VI demnächst verfügbar.",
     "hero.cta": "Jetzt Starten",
@@ -192,13 +207,17 @@ const translations: Record<Locale, Dict> = {
     "stats.upload.title": "Hochladen",
     "stats.upload.desc": "Lade ein Foto deines Gesichts hoch (JPG, PNG, PDF, HEIC)",
     "stats.customize.title": "Anpassen",
-    "stats.customize.desc": "Erstelle deinen Charakter in weniger als 30 Sekunden.",
+    "stats.customize.desc": "Wähle deinen GTA 5 oder GTA 6 Stil in weniger als 30 Sekunden.",
     "stats.download.title": "Herunterladen",
-    "stats.download.desc": "Lade dein ultra-realistisches Bild in 4K oder 1080p herunter.",
+    "stats.download.desc": "Lade deinen ultra-realistischen Charakter in 4K oder 1080p herunter.",
+
+    "gallery.before": "Vorher",
+    "gallery.after": "Nach unserer KI",
+    "gallery.subtitle": "Ziehe den Regler, um die GTA-Verwandlung zu entdecken",
 
     "faq.title": "FAQ",
     "faq.q1": "Wie funktioniert die Charakterverwandlung?",
-    "faq.a1": "Lade dein Foto hoch, wähle ein Universum (GTA 5, Fortnite, Simpsons oder Minecraft) und unsere KI-Pipeline verwandelt dich in einen Charakter unter Beibehaltung deiner Ähnlichkeit und skaliert das Ergebnis dann auf 4K hoch (RealESRGAN). Alles geschieht in weniger als 30 Sekunden auf unseren Servern.",
+    "faq.a1": "Lade dein Foto hoch, wähle dein Universum (GTA 5 oder GTA 6) und unsere KI-Pipeline verwandelt dich in einen Charakter unter Beibehaltung deiner Ähnlichkeit und skaliert das Ergebnis dann auf 4K hoch (RealESRGAN). Alles geschieht in weniger als 30 Sekunden auf unseren Servern.",
     "faq.q2": "Werden meine Fotos gespeichert?",
     "faq.a2": "Nein. Dein Originalfoto wird nach der Verarbeitung automatisch von unseren Servern gelöscht. Nur das generierte Bild wird in deinem Verlauf gespeichert, und du kannst es jederzeit löschen.",
     "faq.q3": "Kann ich ein beliebiges Foto verwenden?",
@@ -239,12 +258,25 @@ const I18nContext = createContext<I18nContextValue>({
   t: (key: string) => translations.fr[key] ?? key,
 });
 
+function readCookieLocale(): Locale | null {
+  const match = document.cookie.match(/(?:^|;\s*)site_lang=([^;]+)/);
+  const value = match?.[1] as Locale | undefined;
+  return value && LOCALES.some((l) => l.code === value) ? value : null;
+}
+
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("fr");
 
   useEffect(() => {
+    // Priorité : 1) choix manuel de l'utilisateur (localStorage),
+    // 2) langue détectée selon le pays par le middleware (cookie), 3) français.
     const stored = localStorage.getItem(SITE_LANG_STORAGE_KEY) as Locale | null;
-    if (stored && LOCALES.some((l) => l.code === stored)) setLocaleState(stored);
+    if (stored && LOCALES.some((l) => l.code === stored)) {
+      setLocaleState(stored);
+    } else {
+      const geo = readCookieLocale();
+      if (geo) setLocaleState(geo);
+    }
 
     const onChange = (e: Event) => {
       const detail = (e as CustomEvent<Locale>).detail;
@@ -257,6 +289,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const setLocale = useCallback((l: Locale) => {
     setLocaleState(l);
     localStorage.setItem(SITE_LANG_STORAGE_KEY, l);
+    // On met aussi à jour le cookie pour que le choix manuel prime côté serveur.
+    document.cookie = `${SITE_LANG_STORAGE_KEY}=${l}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
     window.dispatchEvent(new CustomEvent(SITE_LANG_EVENT, { detail: l }));
   }, []);
 
