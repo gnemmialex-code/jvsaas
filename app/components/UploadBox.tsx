@@ -5,6 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, X, ImageIcon, AlertCircle } from "lucide-react";
 import Image from "next/image";
+import { useI18n } from "@/lib/i18n";
 
 interface UploadBoxProps {
   onFileSelected: (file: File, preview: string) => void;
@@ -21,10 +22,12 @@ export default function UploadBox({
   onFileSelected,
   onClear,
   preview,
-  label = "Uploadez votre photo",
+  label,
   maxSizeMB = MAX_SIZE_MB,
 }: UploadBoxProps) {
+  const { t } = useI18n();
   const [error, setError] = useState<string | null>(null);
+  const resolvedLabel = label ?? t("upload.photoLabel");
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: unknown[]) => {
@@ -34,11 +37,11 @@ export default function UploadBox({
         const rejected = rejectedFiles[0] as { errors?: { code: string }[] };
         const errCode = rejected?.errors?.[0]?.code;
         if (errCode === "file-too-large") {
-          setError(`Fichier trop lourd. Max ${maxSizeMB}MB.`);
+          setError(t("upload.tooLarge").replace("{n}", String(maxSizeMB)));
         } else if (errCode === "file-invalid-type") {
-          setError("Format non supporté. Utilisez JPG, PNG, PDF ou HEIC.");
+          setError(t("upload.badFormatPhoto"));
         } else {
-          setError("Fichier invalide.");
+          setError(t("upload.invalidFile"));
         }
         return;
       }
@@ -65,7 +68,7 @@ export default function UploadBox({
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium text-white/70 mb-2">{label}</label>
+      <label className="block text-sm font-medium text-white/70 mb-2">{resolvedLabel}</label>
 
       <AnimatePresence mode="wait">
         {preview ? (
@@ -117,10 +120,10 @@ export default function UploadBox({
               )}
             </div>
             <p className="text-white font-semibold mb-1">
-              {isDragActive ? "Déposez ici !" : "Glissez votre photo"}
+              {isDragActive ? t("upload.dropHere") : t("upload.dragPhoto")}
             </p>
             <p className="text-white/40 text-sm mb-4">
-              ou cliquez pour sélectionner
+              {t("upload.orClick")}
             </p>
             <p className="text-white/25 text-xs">
               JPG, PNG, PDF, HEIC • Max {maxSizeMB}MB

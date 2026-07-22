@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useI18n } from "@/lib/i18n";
 
 interface LoaderProps {
   message?: string;
@@ -10,11 +11,13 @@ interface LoaderProps {
 }
 
 export default function Loader({
-  message = "Génération en cours...",
+  message,
   progress,
   steps,
   currentStep = 0,
 }: LoaderProps) {
+  const { t } = useI18n();
+  const resolvedMessage = message ?? t("dash.gen.inProgress");
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
       {/* Animated orb */}
@@ -44,14 +47,14 @@ export default function Loader({
         transition={{ duration: 1.5, repeat: Infinity }}
         className="text-white font-semibold text-lg mb-2"
       >
-        {message}
+        {resolvedMessage}
       </motion.p>
 
       {/* Progress bar */}
       {progress !== undefined && (
         <div className="w-64 mt-4">
           <div className="flex justify-between text-xs text-white/40 mb-1">
-            <span>Progression</span>
+            <span>{t("common.progress")}</span>
             <span>{Math.round(progress)}%</span>
           </div>
           <div className="h-1.5 bg-surface-border rounded-full overflow-hidden">

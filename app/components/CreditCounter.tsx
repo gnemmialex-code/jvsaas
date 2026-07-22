@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Zap, Plus } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 export default function CreditCounter() {
+  const { t } = useI18n();
   const [credits, setCredits] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -48,7 +50,7 @@ export default function CreditCounter() {
         }`}
       >
         <Zap className="w-3.5 h-3.5" />
-        <span>{credits} crédit{credits !== 1 ? "s" : ""}</span>
+        <span>{credits} {t("dash.credits")}</span>
       </div>
       {isLow && (
         <Link

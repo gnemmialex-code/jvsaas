@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Zap, Check, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useI18n } from "@/lib/i18n";
 
 interface PaywallModalProps {
   isOpen: boolean;
@@ -11,37 +12,40 @@ interface PaywallModalProps {
   reason?: string;
 }
 
-const PACKS = [
-  {
-    id: "pack_50",
-    credits: 50,
-    price: "4,99€",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_50 ?? "",
-    perCredit: "0,10€/crédit",
-    popular: false,
-  },
-  {
-    id: "pack_150",
-    credits: 150,
-    price: "9,99€",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_150 ?? "",
-    perCredit: "0,07€/crédit",
-    popular: true,
-    savings: "Économisez 30%",
-  },
-  {
-    id: "pack_400",
-    credits: 400,
-    price: "19,99€",
-    priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_400 ?? "",
-    perCredit: "0,05€/crédit",
-    popular: false,
-    savings: "Économisez 50%",
-  },
-];
-
 export default function PaywallModal({ isOpen, onClose, reason }: PaywallModalProps) {
+  const { t } = useI18n();
   const [loading, setLoading] = useState<string | null>(null);
+
+  const perCredit = (v: string) => `${v}${t("paywall.perCredit")}`;
+  const PACKS = [
+    {
+      id: "pack_50",
+      credits: 50,
+      price: "4,99€",
+      priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_50 ?? "",
+      perCredit: perCredit("0,10€"),
+      popular: false,
+      savings: undefined as string | undefined,
+    },
+    {
+      id: "pack_150",
+      credits: 150,
+      price: "9,99€",
+      priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_150 ?? "",
+      perCredit: perCredit("0,07€"),
+      popular: true,
+      savings: t("paywall.save30"),
+    },
+    {
+      id: "pack_400",
+      credits: 400,
+      price: "19,99€",
+      priceId: process.env.NEXT_PUBLIC_STRIPE_PRICE_400 ?? "",
+      perCredit: perCredit("0,05€"),
+      popular: false,
+      savings: t("paywall.save50"),
+    },
+  ];
 
   const handlePurchase = async (pack: typeof PACKS[0]) => {
     setLoading(pack.id);
@@ -55,10 +59,10 @@ export default function PaywallModal({ isOpen, onClose, reason }: PaywallModalPr
       if (data.url) {
         window.location.href = data.url;
       } else {
-        toast.error("Erreur lors de la création de la session");
+        toast.error(t("paywall.sessionError"));
       }
     } catch {
-      toast.error("Erreur de connexion");
+      toast.error(t("login.errorGeneric"));
     } finally {
       setLoading(null);
     }
@@ -92,10 +96,10 @@ export default function PaywallModal({ isOpen, onClose, reason }: PaywallModalPr
                 <Zap className="w-8 h-8 text-accent-orange" />
               </div>
               <h2 className="text-2xl font-bold mb-2">
-                {reason ?? "Crédits insuffisants"}
+                {reason ?? t("paywall.insufficient")}
               </h2>
               <p className="text-white/50">
-                Rechargez pour continuer à générer des images Ultra HD
+                {t("paywall.subtitle")}
               </p>
             </div>
 
@@ -115,7 +119,7 @@ export default function PaywallModal({ isOpen, onClose, reason }: PaywallModalPr
                 >
                   {pack.popular && (
                     <span className="absolute -top-2 left-4 bg-accent-orange text-white text-xs px-3 py-0.5 rounded-full font-semibold">
-                      Populaire
+                      {t("paywall.popular")}
                     </span>
                   )}
                   <div className="flex items-center justify-between">
@@ -128,7 +132,7 @@ export default function PaywallModal({ isOpen, onClose, reason }: PaywallModalPr
                         </div>
                       )}
                       <div>
-                        <p className="font-semibold">{pack.credits} crédits</p>
+                        <p className="font-semibold">{pack.credits} {t("dash.credits")}</p>
                         <p className="text-white/40 text-sm">{pack.perCredit}</p>
                       </div>
                     </div>
@@ -146,15 +150,15 @@ export default function PaywallModal({ isOpen, onClose, reason }: PaywallModalPr
             <div className="mt-6 flex items-center justify-center gap-4 text-white/30 text-xs">
               <div className="flex items-center gap-1">
                 <Check className="w-3 h-3" />
-                Paiement sécurisé
+                {t("paywall.securePayment")}
               </div>
               <div className="flex items-center gap-1">
                 <Check className="w-3 h-3" />
-                Sans abonnement
+                {t("paywall.noSubscription")}
               </div>
               <div className="flex items-center gap-1">
                 <Check className="w-3 h-3" />
-                Crédits sans expiry
+                {t("paywall.noExpiry")}
               </div>
             </div>
           </motion.div>

@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import { Upload, X, Film, AlertCircle } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 interface VideoUploadBoxProps {
   onFileSelected: (file: File, preview: string) => void;
@@ -20,9 +21,11 @@ export default function VideoUploadBox({
   onFileSelected,
   onClear,
   preview,
-  label = "Uploadez votre vidéo",
+  label,
   maxSizeMB = MAX_SIZE_MB,
 }: VideoUploadBoxProps) {
+  const { t } = useI18n();
+  const resolvedLabel = label ?? t("upload.videoLabel");
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
 
@@ -34,11 +37,11 @@ export default function VideoUploadBox({
         const rejected = rejectedFiles[0] as { errors?: { code: string }[] };
         const errCode = rejected?.errors?.[0]?.code;
         if (errCode === "file-too-large") {
-          setError(`Fichier trop lourd. Max ${maxSizeMB}MB.`);
+          setError(t("upload.tooLarge").replace("{n}", String(maxSizeMB)));
         } else if (errCode === "file-invalid-type") {
-          setError("Format non supporté. Utilisez MP4, MOV ou WebM.");
+          setError(t("upload.badFormatVideo"));
         } else {
-          setError("Fichier invalide.");
+          setError(t("upload.invalidFile"));
         }
         return;
       }
@@ -63,7 +66,7 @@ export default function VideoUploadBox({
 
   return (
     <div className="w-full">
-      <label className="block text-sm font-medium text-white/70 mb-2">{label}</label>
+      <label className="block text-sm font-medium text-white/70 mb-2">{resolvedLabel}</label>
 
       <AnimatePresence mode="wait">
         {preview ? (
@@ -84,7 +87,7 @@ export default function VideoUploadBox({
               <X className="w-4 h-4" />
             </button>
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-3">
-              <p className="text-white/80 text-xs truncate">{fileName ?? "Vidéo sélectionnée"} ✓</p>
+              <p className="text-white/80 text-xs truncate">{fileName ?? t("upload.videoSelected")} ✓</p>
             </div>
           </motion.div>
         ) : (
@@ -106,9 +109,9 @@ export default function VideoUploadBox({
                 {isDragActive ? <Film className="w-8 h-8" /> : <Upload className="w-8 h-8" />}
               </div>
               <p className="text-white font-semibold mb-1">
-                {isDragActive ? "Déposez ici !" : "Glissez votre vidéo"}
+                {isDragActive ? t("upload.dropHere") : t("upload.dragVideo")}
               </p>
-              <p className="text-white/40 text-sm mb-4">ou cliquez pour sélectionner</p>
+              <p className="text-white/40 text-sm mb-4">{t("upload.orClick")}</p>
               <p className="text-white/25 text-xs">MP4, MOV, WebM • Max {maxSizeMB}MB</p>
             </div>
           </motion.div>
