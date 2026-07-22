@@ -499,14 +499,14 @@ function DashboardContent() {
       if (found) { setSelectedStyle(found); setNavView("create"); }
     }
     if (params.get("payment") === "snap_success") {
-      toast.success("🔥 Paiement reçu ! Votre accès Snap Rouge s'active dans quelques secondes…", { duration: 6000 });
+      toast.success(t("dash.toast.snapSuccess"), { duration: 6000 });
       setTimeout(() => fetchStats(), 4000);
     }
     // Retour d'un achat d'abonnement (Stripe redirige ici via success_url).
     // Le webhook attribue le rôle/crédits de façon asynchrone → on rafraîchit
     // les stats plusieurs fois pour afficher le nouvel accès sans refresh manuel.
     if (params.get("payment") === "success") {
-      toast.success("✅ Paiement reçu ! Votre abonnement s'active dans quelques secondes…", { duration: 6000 });
+      toast.success(t("dash.toast.paySuccess"), { duration: 6000 });
       setNavView("create");
       [2000, 5000, 9000].forEach((ms) => setTimeout(() => fetchStats(), ms));
     }
@@ -529,7 +529,7 @@ function DashboardContent() {
             });
             const d = await res.json();
             if (res.ok && d.ok) {
-              toast.success("🎁 Parrainage appliqué — +100 crédits bonus !", { duration: 6000 });
+              toast.success(t("dash.toast.refApplied"), { duration: 6000 });
               fetchStats();
             }
           } catch { /* silent */ }
@@ -577,7 +577,7 @@ function DashboardContent() {
         if (ok && d.code) setReferral({ code: d.code, referrals: d.referrals ?? 0, credits_earned: d.credits_earned ?? 0 });
         else if (d.error) toast.error(d.error);
       })
-      .catch(() => toast.error("Impossible de charger le parrainage"))
+      .catch(() => toast.error(t("dash.toast.refLoadError")))
       .finally(() => setReferralLoading(false));
   }, [navView, isAuthed, referral, referralLoading]);
 
@@ -590,9 +590,9 @@ function DashboardContent() {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedField(field);
-      toast.success(field === "code" ? "Code copié !" : "Lien copié !");
+      toast.success(field === "code" ? t("dash.toast.codeCopied") : t("dash.toast.linkCopied"));
       setTimeout(() => setCopiedField(null), 2000);
-    } catch { toast.error("Impossible de copier"); }
+    } catch { toast.error(t("dash.toast.copyError")); }
   };
 
   const fetchGenerations = async () => {
@@ -617,7 +617,7 @@ function DashboardContent() {
     setDeletingId(id);
     try {
       const res = await fetch(`/api/generations/${id}`, { method: "DELETE" });
-      if (res.ok) { setGenerations(prev => prev.filter(g => g.id !== id)); toast.success("Supprimé"); }
+      if (res.ok) { setGenerations(prev => prev.filter(g => g.id !== id)); toast.success(t("dash.toast.deleted")); }
     } finally { setDeletingId(null); }
   };
 
@@ -628,12 +628,12 @@ function DashboardContent() {
       if (res.ok) {
         setGenerations([]);
         setConfirmDeleteAll(false);
-        toast.success("Historique supprimé");
+        toast.success(t("dash.toast.historyDeleted"));
       } else {
-        toast.error("Erreur lors de la suppression");
+        toast.error(t("dash.toast.deleteError"));
       }
     } catch {
-      toast.error("Erreur de connexion");
+      toast.error(t("login.errorGeneric"));
     } finally {
       setDeletingAll(false);
     }
@@ -648,7 +648,7 @@ function DashboardContent() {
       const a         = document.createElement("a");
       a.href = objectUrl; a.download = `astracrea-${id}.png`; a.click();
       URL.revokeObjectURL(objectUrl);
-    } catch { toast.error("Erreur de téléchargement"); }
+    } catch { toast.error(t("dash.toast.downloadError")); }
   };
 
   const handleLogout = async () => { await supabase.auth.signOut(); router.push("/"); };
@@ -656,19 +656,19 @@ function DashboardContent() {
   /* Change le mot de passe du compte — la session active suffit : ni ancien
      mot de passe ni e-mail demandés, juste une double saisie identique. */
   const handleChangePassword = async () => {
-    if (newPassword.length < 8) { toast.error("8 caractères minimum"); return; }
-    if (newPassword !== confirmNewPassword) { toast.error("Les mots de passe ne correspondent pas"); return; }
+    if (newPassword.length < 8) { toast.error(t("register.errorMinChars")); return; }
+    if (newPassword !== confirmNewPassword) { toast.error(t("register.errorPasswordMismatch")); return; }
     setSavingPassword(true);
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) {
         toast.error(
           error.message.toLowerCase().includes("different")
-            ? "Le nouveau mot de passe doit être différent de l'ancien"
-            : "Impossible de modifier le mot de passe"
+            ? t("reset.errorSame")
+            : t("dash.toast.pwChangeError")
         );
       } else {
-        toast.success("Mot de passe modifié !");
+        toast.success(t("dash.toast.pwChanged"));
         setNewPassword("");
         setConfirmNewPassword("");
         setShowNewPassword(false);
@@ -683,8 +683,8 @@ function DashboardContent() {
     setSavingName(true);
     try {
       const { error } = await supabase.auth.updateUser({ data: { display_name: displayName.trim() } });
-      if (error) toast.error("Impossible d'enregistrer le nom");
-      else { toast.success("Nom enregistré"); setEditingName(false); }
+      if (error) toast.error(t("dash.toast.nameSaveError"));
+      else { toast.success(t("dash.toast.nameSaved")); setEditingName(false); }
     } finally {
       setSavingName(false);
     }
@@ -705,13 +705,13 @@ function DashboardContent() {
       if (res.ok && d.ok) {
         setAdminScript({ ...adminScript, enabled: next });
         toast.success(next
-          ? "Script de génération ACTIVÉ — les prochaines générations l'utilisent"
-          : "Script de génération DÉSACTIVÉ — générations en mode brut pour comparer");
+          ? t("dash.toast.scriptOn")
+          : t("dash.toast.scriptOff"));
       } else {
-        toast.error(d.error ?? "Impossible de changer le réglage");
+        toast.error(d.error ?? t("dash.toast.settingError"));
       }
     } catch {
-      toast.error("Erreur de connexion");
+      toast.error(t("login.errorGeneric"));
     } finally {
       setTogglingScript(false);
     }
@@ -726,15 +726,15 @@ function DashboardContent() {
       if (res.ok && d.ok) {
         const end = d.current_period_end
           ? new Date(d.current_period_end).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
-          : "la fin de la période en cours";
-        toast.success(`Abonnement annulé — il reste actif jusqu'au ${end}`, { duration: 7000 });
+          : t("dash.toast.periodEnd");
+        toast.success(t("dash.toast.subCancelled").replace("{end}", end), { duration: 7000 });
         setSubInfo(prev => prev ? { ...prev, cancel_at_period_end: true, current_period_end: d.current_period_end ?? prev.current_period_end } : prev);
         setConfirmCancelSub(false);
       } else {
-        toast.error(d.error ?? "Erreur lors de l'annulation");
+        toast.error(d.error ?? t("dash.toast.cancelError"));
       }
     } catch {
-      toast.error("Erreur de connexion");
+      toast.error(t("login.errorGeneric"));
     } finally {
       setCancellingSub(false);
     }
@@ -745,15 +745,15 @@ function DashboardContent() {
     try {
       const res = await fetch("/api/account/delete", { method: "DELETE" });
       if (res.ok) {
-        toast.success("Compte fermé");
+        toast.success(t("dash.toast.accountClosed"));
         await supabase.auth.signOut();
         router.push("/");
       } else {
         const d = await res.json().catch(() => ({}));
-        toast.error(d.error ?? "Erreur lors de la fermeture du compte");
+        toast.error(d.error ?? t("dash.toast.closeError"));
       }
     } catch {
-      toast.error("Erreur de connexion");
+      toast.error(t("login.errorGeneric"));
     } finally {
       setClosingAccount(false);
     }
@@ -795,7 +795,7 @@ function DashboardContent() {
   const handleGenerate = async () => {
     if (isAuthed === false) { setShowAuthGate(true); return; }
     setError(null);
-    if (!consent) { setError("Veuillez accepter les conditions."); return; }
+    if (!consent) { setError(t("dash.err.consent")); return; }
 
     const formData = new FormData();
 
@@ -804,7 +804,7 @@ function DashboardContent() {
     const isGta6View = navView === "gta6";
 
     if (genType === "create" || isGta6View) {
-      if (!styleFile) { setError("Veuillez uploader une photo."); return; }
+      if (!styleFile) { setError(t("dash.err.uploadPhoto")); return; }
       // Toutes les générations partent en mode personnage GTA 5 : c'est ce qui
       // active le contexte de stylisation forte + le boost GTA 5 côté serveur
       // (l'ancienne description libre partait en simple retouche trop timide).
@@ -842,8 +842,8 @@ function DashboardContent() {
       formData.append("quality",         quality);
       formData.append("mode", "style");
     } else if (genType === "video") {
-      if (!videoFile)   { setError("Veuillez uploader une vidéo."); return; }
-      if (!videoPrompt) { setError("Veuillez entrer un prompt."); return; }
+      if (!videoFile)   { setError(t("dash.err.uploadVideo")); return; }
+      if (!videoPrompt) { setError(t("dash.err.enterPrompt")); return; }
       formData.append("video",          videoFile);
       formData.append("prompt",         videoPrompt);
       formData.append("object_options", JSON.stringify([...videoObjectOptions]));
@@ -866,8 +866,8 @@ function DashboardContent() {
       const rawText = await res.text();
       let startData: Record<string, unknown>;
       try { startData = JSON.parse(rawText); }
-      catch { throw new Error(rawText || `Erreur serveur (${res.status})`); }
-      if (!res.ok) throw new Error((startData.error as string) || `Erreur serveur (${res.status})`);
+      catch { throw new Error(rawText || `${t("dash.err.server")} (${res.status})`); }
+      if (!res.ok) throw new Error((startData.error as string) || `${t("dash.err.server")} (${res.status})`);
 
       const jobId        = startData.job_id        as string | undefined;
       const predictionId = startData.prediction_id as string | undefined;
@@ -875,8 +875,8 @@ function DashboardContent() {
 
       // ── POLL until done ────────────────────────────────────────────────────
       const STEP_LABELS: Record<number, string> = {
-        1: "Génération IA en cours…",
-        2: "Finalisation Ultra 4K…",
+        1: t("dash.gen.step1"),
+        2: t("dash.gen.step2"),
       };
 
       let outputUrl: string | null = null;
@@ -893,10 +893,10 @@ function DashboardContent() {
         const pollText = await pollRes.text();
         let poll: Record<string, unknown> = {};
         try { poll = JSON.parse(pollText); }
-        catch { throw new Error(pollText || `Erreur serveur poll (${pollRes.status})`); }
+        catch { throw new Error(pollText || `${t("dash.err.server")} (${pollRes.status})`); }
 
         if (!pollRes.ok || poll.status === "error") {
-          throw new Error((poll.error as string) || `Erreur serveur (${pollRes.status})`);
+          throw new Error((poll.error as string) || `${t("dash.err.server")} (${pollRes.status})`);
         }
         if (poll.status === "done" && poll.output_image_url) {
           outputUrl = poll.output_image_url as string;
@@ -905,7 +905,7 @@ function DashboardContent() {
 
         // Update progress label based on current step
         const step = (poll.step as number) ?? 1;
-        const label = STEP_LABELS[step] ?? "Génération en cours…";
+        const label = STEP_LABELS[step] ?? t("dash.gen.inProgress");
         setGenProgress(Math.min(92, 15 + step * 26));
         if (attempt === 0) toast.loading(label, { id: "gen-progress" });
         else toast.loading(label, { id: "gen-progress" });
@@ -913,21 +913,21 @@ function DashboardContent() {
 
       toast.dismiss("gen-progress");
 
-      if (!outputUrl) throw new Error("Délai dépassé — réessayez");
+      if (!outputUrl) throw new Error(t("dash.err.timeout"));
 
       setGenProgress(100);
       setResultUrl(outputUrl);
       setResultStyle("");
-      toast.success("Génération terminée !");
+      toast.success(t("dash.toast.genDone"));
       await fetchGenerations();
       await fetchStats();
 
     } catch (err: unknown) {
       clearInterval(iv);
       toast.dismiss("gen-progress");
-      const msg = err instanceof Error ? err.message : "Erreur inconnue";
+      const msg = err instanceof Error ? err.message : t("dash.err.unknown");
       if (msg === "__CANCELED__") {
-        toast("Génération annulée", { icon: "🛑" });
+        toast(t("dash.toast.genCancelled"), { icon: "🛑" });
       } else {
         setError(msg);
         toast.error(msg);
@@ -961,7 +961,7 @@ function DashboardContent() {
           Parrainage), sans jamais quitter la page. */}
       <Navbar
         wide
-        ctaLabel="Abonnement"
+        ctaLabel={t("dash.nav.subscription")}
         ctaHref="/abonnement"
         onCtaClick={(e) => { e.preventDefault(); changeView("subscription"); }}
         middleContent={
@@ -970,7 +970,7 @@ function DashboardContent() {
               onClick={() => changeView("create")}
               className="text-[12px] font-medium tracking-wide gradient-text-orange-subtle hover:opacity-80 hover:scale-110 transition-all duration-300 whitespace-nowrap shrink-0 inline-block"
             >
-              Générer
+              {t("dash.gen.generate")}
             </button>
             <button
               onClick={() => changeView("gta6")}
@@ -982,19 +982,19 @@ function DashboardContent() {
               onClick={() => changeView("history")}
               className="text-[13px] font-light tracking-wide text-white/75 hover:text-white hover:scale-110 transition-all duration-300 whitespace-nowrap shrink-0 inline-block"
             >
-              Historique
+              {t("dash.nav.history")}
             </button>
             <button
               onClick={() => changeView("referral")}
               className="text-[13px] font-light tracking-wide text-white/75 hover:text-white hover:scale-110 transition-all duration-300 whitespace-nowrap shrink-0 inline-block"
             >
-              Parrainage
+              {t("dash.nav.referral")}
             </button>
             <button
               onClick={() => changeView("community")}
               className="text-[13px] font-light tracking-wide text-white/75 hover:text-white hover:scale-110 transition-all duration-300 whitespace-nowrap shrink-0 inline-block"
             >
-              Communauté
+              {t("dash.nav.community")}
             </button>
           </>
         }
@@ -1026,18 +1026,18 @@ function DashboardContent() {
                 <div className="flex items-center gap-3 text-center sm:text-left">
                   <Lock className="w-5 h-5 text-accent-orange flex-shrink-0 hidden sm:block" />
                   <div>
-                    <p className="font-bold text-sm text-white">Vous explorez le Dashboard en mode aperçu</p>
-                    <p className="text-white/50 text-xs mt-0.5">Connectez-vous ou créez un compte pour générer vos images — 100 crédits offerts à l&apos;inscription</p>
+                    <p className="font-bold text-sm text-white">{t("dash.preview.title")}</p>
+                    <p className="text-white/50 text-xs mt-0.5">{t("dash.preview.subtitle")}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <Link href="/login" className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-accent-orange/40 text-accent-orange hover:bg-accent-orange/10 text-sm font-bold transition-all whitespace-nowrap">
                     <LogIn className="w-4 h-4" />
-                    Connexion
+                    {t("dash.preview.login")}
                   </Link>
                   <Link href="/register" className="btn-primary-orange flex items-center gap-1.5 px-4 py-2 text-sm whitespace-nowrap">
                     <UserPlus className="w-4 h-4" />
-                    Créer un compte
+                    {t("register.title")}
                   </Link>
                 </div>
               </motion.div>
@@ -1061,7 +1061,7 @@ function DashboardContent() {
                             key={tab.id}
                             onClick={() => {
                               if (isVideoLocked) {
-                                toast("La vidéo est disponible à partir du plan Pro ⚡", { icon: "🔒" });
+                                toast(t("dash.create.videoLocked"), { icon: "🔒" });
                                 return;
                               }
                               setGenType(tab.id); setError(null);
@@ -1108,14 +1108,14 @@ function DashboardContent() {
                       <div className="lg:col-span-1">
                         <AnimatedCard delay={0} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-4">
                           <h2 className="font-semibold text-sm mb-3 flex items-center justify-between">
-                            <span>Votre photo</span>
+                            <span>{t("dash.create.yourPhoto")}</span>
                             <StepBadge n={1} />
                           </h2>
                           <UploadBox
                             onFileSelected={(f,p)=>{setStyleFile(f);setStylePreview(p);setError(null);}}
                             onClear={()=>{setStyleFile(null);setStylePreview(null);}}
                             preview={stylePreview}
-                            label="Votre photo (visage bien visible)"
+                            label={t("dash.create.yourPhotoLabel")}
                           />
                         </AnimatedCard>
                       </div>
@@ -1130,22 +1130,22 @@ function DashboardContent() {
                         <AnimatedCard delay={0.08} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-3">
                           <h2 className="font-semibold text-sm mb-1.5 flex items-center justify-between">
                             <span className="flex items-center gap-2">
-                              Description
+                              {t("dash.create.description")}
                               <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
                                 userPlanTier(stats?.plan) === "elite"
                                   ? "text-amber-400 border-amber-400/40 bg-amber-400/10"
                                   : "text-white/40 border-surface-border bg-surface-hover"
                               }`}>
-                                {userPlanTier(stats?.plan) === "elite" ? "Ultimate ✨" : "Réservé Ultimate 🔒"}
+                                {userPlanTier(stats?.plan) === "elite" ? t("dash.badge.ultimate") : t("dash.badge.ultimateLocked")}
                               </span>
                             </span>
-                            <span className="text-white/30 text-[10px] font-normal">optionnel</span>
+                            <span className="text-white/30 text-[10px] font-normal">{t("dash.create.optional")}</span>
                           </h2>
                           {userPlanTier(stats?.plan) === "elite" ? (
                             <textarea
                               value={details}
                               onChange={e => setDetails(e.target.value)}
-                              placeholder="Précisez des détails en plus de la scène : tenue, ambiance, objets, attitude…"
+                              placeholder={t("dash.create.descPlaceholder")}
                               rows={2}
                               maxLength={300}
                               className="w-full bg-surface border border-surface-border rounded-xl px-3 py-2 text-white text-sm placeholder-white/20 focus:outline-none focus:border-amber-400/60 resize-none"
@@ -1154,14 +1154,14 @@ function DashboardContent() {
                             <button
                               type="button"
                               onClick={() => {
-                                toast("La description personnalisée est réservée à la formule Ultimate 🔒", { icon: "👑" });
+                                toast(t("dash.create.descLockedToast"), { icon: "👑" });
                                 goToSubscription();
                               }}
                               className="w-full flex items-center gap-2 bg-surface/50 border border-dashed border-surface-border rounded-xl px-3 py-3 text-left hover:border-amber-400/40 transition-all"
                             >
                               <Lock className="w-3.5 h-3.5 text-white/30 flex-shrink-0" />
                               <span className="text-white/30 text-xs">
-                                Décrivez librement votre rendu (tenue, ambiance, objets…) — passez à Ultimate pour débloquer.
+                                {t("dash.create.descLockedText")}
                               </span>
                             </button>
                           )}
@@ -1174,7 +1174,7 @@ function DashboardContent() {
                             onClick={(e) => {
                               if (userPlanTier(stats?.plan) === "essentiel") {
                                 e.preventDefault();
-                                toast("Le mode GTA 5 Intégral est réservé aux formules Essentiel et Ultimate 🔒", { icon: "👑" });
+                                toast(t("dash.create.fullLockedToast"), { icon: "👑" });
                                 goToSubscription();
                               }
                             }}
@@ -1197,24 +1197,24 @@ function DashboardContent() {
                             </div>
                             <div className="min-w-0">
                               <p className="font-semibold text-sm flex items-center gap-2 flex-wrap">
-                                GTA 5 Intégral
+                                {t("dash.create.gta5Full")}
                                 <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${
                                   userPlanTier(stats?.plan) === "essentiel"
                                     ? "text-white/40 border-surface-border bg-surface-hover"
                                     : "text-accent-orange border-accent-orange/40 bg-accent-orange/10"
                                 }`}>
-                                  {userPlanTier(stats?.plan) === "essentiel" ? "Réservé Essentiel & Ultimate 🔒" : "Essentiel & Ultimate ✨"}
+                                  {userPlanTier(stats?.plan) === "essentiel" ? t("dash.badge.essUltLocked") : t("dash.badge.essUlt")}
                                 </span>
                               </p>
                               <p className="text-white/45 text-xs mt-0.5 leading-relaxed">
-                                Toute l&apos;image est transformée en style GTA 5 — le décor, l&apos;ambiance et la personne, comme un vrai artwork du jeu.
+                                {t("dash.create.gta5FullDesc")}
                               </p>
                               <p className="text-white/30 text-[10px] mt-1">
                                 {userPlanTier(stats?.plan) === "elite"
-                                  ? "Votre formule Ultimate : jusqu'à 35 générations Intégral par mois."
+                                  ? t("dash.create.quotaElite")
                                   : userPlanTier(stats?.plan) === "pro"
-                                    ? "Votre formule Essentiel : 3 générations Intégral par mois (35 avec Ultimate)."
-                                    : "3 générations/mois avec Essentiel · 35/mois avec Ultimate."}
+                                    ? t("dash.create.quotaPro")
+                                    : t("dash.create.quotaFree")}
                               </p>
                             </div>
                           </label>
@@ -1226,8 +1226,8 @@ function DashboardContent() {
                           tier={userPlanTier(stats?.plan)}
                           step={2}
                           onLockedClick={(q) => {
-                            const name = q === "ultra" ? "Ultimate" : "Essentiel";
-                            toast(`Qualité ${q.toUpperCase()} réservée à la formule ${name} 🔒`, { icon: "👑" });
+                            const name = q === "ultra" ? t("dash.plan.elite.name") : t("dash.plan.pro.name");
+                            toast(t("dash.create.qualityLockedToast").replace("{q}", q.toUpperCase()).replace("{name}", name), { icon: "👑" });
                             goToSubscription();
                           }}
                         />
@@ -1256,21 +1256,21 @@ function DashboardContent() {
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                       <div className="lg:col-span-2 space-y-4">
                         <AnimatedCard delay={0} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-4">
-                          <h2 className="font-semibold text-sm mb-3 flex items-center justify-between"><span>Votre vidéo</span><StepBadge n={1} /></h2>
-                          <VideoUploadBox onFileSelected={(f,p)=>{setVideoFile(f);setVideoPreview(p);}} onClear={()=>{setVideoFile(null);setVideoPreview(null);}} preview={videoPreview} label="Vidéo à transformer" />
+                          <h2 className="font-semibold text-sm mb-3 flex items-center justify-between"><span>{t("dash.create.yourVideo")}</span><StepBadge n={1} /></h2>
+                          <VideoUploadBox onFileSelected={(f,p)=>{setVideoFile(f);setVideoPreview(p);}} onClear={()=>{setVideoFile(null);setVideoPreview(null);}} preview={videoPreview} label={t("dash.create.videoLabel")} />
                         </AnimatedCard>
                         <AnimatedCard delay={0.08} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-4">
                           <h2 className="font-semibold text-sm mb-3 flex items-center justify-between"><span>Prompt</span><StepBadge n={2} /></h2>
                           <textarea value={videoPrompt} onChange={e=>setVideoPrompt(e.target.value)}
-                            placeholder="Décrivez la transformation souhaitée…" rows={3}
+                            placeholder={t("dash.create.videoPromptPlaceholder")} rows={3}
                             className="w-full bg-surface border border-surface-border rounded-xl px-3 py-2 text-white text-sm placeholder-white/20 focus:outline-none focus:border-accent-orange/60 resize-none" />
                         </AnimatedCard>
                         <AnimatedCard delay={0.16} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-4">
-                          <h2 className="font-semibold text-sm mb-3 flex items-center justify-between"><span className="flex items-center gap-2">Modifier un objet <span className="text-white/30 text-xs font-normal">(optionnel)</span></span><StepBadge n={3} /></h2>
+                          <h2 className="font-semibold text-sm mb-3 flex items-center justify-between"><span className="flex items-center gap-2">{t("dash.create.editObject")} <span className="text-white/30 text-xs font-normal">{t("dash.create.optionalParen")}</span></span><StepBadge n={3} /></h2>
                           <div className="space-y-2">
                             {([
-                              {id:"addObject" as ObjectOption, icon:PlusCircle, label:"Ajouter un objet", desc:"Insère dans la vidéo"},
-                              {id:"replaceObject" as ObjectOption, icon:Replace, label:"Remplacer un objet", desc:"Frame par frame"},
+                              {id:"addObject" as ObjectOption, icon:PlusCircle, label:t("dash.create.addObject"), desc:t("dash.create.addObjectDesc")},
+                              {id:"replaceObject" as ObjectOption, icon:Replace, label:t("dash.create.replaceObject"), desc:t("dash.create.replaceObjectDesc")},
                             ]).map(({id,icon:Icon,label,desc})=>{
                               const checked = videoObjectOptions.has(id);
                               return (
@@ -1303,13 +1303,13 @@ function DashboardContent() {
                     <div className="sticky top-6 max-h-[calc(100vh-3.5rem)] overflow-y-auto rounded-2xl">
                       <div className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl overflow-hidden">
                         <div className="px-4 py-3 border-b border-surface-border flex items-center justify-between">
-                          <h3 className="font-semibold text-sm">Résultat</h3>
+                          <h3 className="font-semibold text-sm">{t("dash.result.title")}</h3>
                           {resultUrl && (
                             <button
                               onClick={() => { setResultUrl(null); setResultStyle(""); }}
                               className="text-xs text-white/40 hover:text-white transition-colors"
                             >
-                              Effacer
+                              {t("dash.result.clear")}
                             </button>
                           )}
                         </div>
@@ -1327,7 +1327,7 @@ function DashboardContent() {
                                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-orange hover:bg-accent-orange/80 text-white text-sm font-semibold transition-all"
                                 >
                                   <Download className="w-4 h-4" />
-                                  Télécharger
+                                  {t("dash.result.download")}
                                 </button>
                               ) : (
                                 <button
@@ -1335,7 +1335,7 @@ function DashboardContent() {
                                   className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-accent-orange hover:bg-accent-orange/80 text-white text-sm font-semibold transition-all"
                                 >
                                   <Crown className="w-4 h-4" />
-                                  Débloquer en HD
+                                  {t("dash.result.unlockHd")}
                                 </button>
                               )}
                             </div>
@@ -1349,7 +1349,7 @@ function DashboardContent() {
                                   transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                                   className="w-12 h-12 rounded-full border-2 border-accent-orange/30 border-t-accent-orange"
                                 />
-                                <p className="text-white/50 text-sm font-medium">Génération en cours…</p>
+                                <p className="text-white/50 text-sm font-medium">{t("dash.gen.inProgress")}</p>
                                 <div className="w-full h-1.5 bg-surface-hover rounded-full overflow-hidden">
                                   <motion.div
                                     className="h-full gradient-bg-orange-animated rounded-full"
@@ -1365,7 +1365,7 @@ function DashboardContent() {
                                   className="mt-1 flex items-center gap-1.5 px-4 py-1.5 rounded-xl border border-red-500/40 text-red-400 hover:bg-red-500/10 text-xs font-semibold transition-all"
                                 >
                                   <StopCircle className="w-3.5 h-3.5" />
-                                  Arrêter
+                                  {t("dash.result.stop")}
                                 </motion.button>
                               </>
                             ) : (
@@ -1373,8 +1373,8 @@ function DashboardContent() {
                                 <div className="w-16 h-16 rounded-2xl bg-surface-hover flex items-center justify-center">
                                   <Sparkles className="w-7 h-7 text-white/20" />
                                 </div>
-                                <p className="text-white/40 text-sm">Votre résultat apparaîtra ici</p>
-                                <p className="text-white/20 text-xs">Remplissez le formulaire et appuyez sur Générer</p>
+                                <p className="text-white/40 text-sm">{t("dash.result.placeholder")}</p>
+                                <p className="text-white/20 text-xs">{t("dash.result.placeholderSub")}</p>
                               </>
                             )}
                           </div>
@@ -1403,19 +1403,16 @@ function DashboardContent() {
                           <Lock className="w-8 h-8 text-amber-400" />
                         </div>
                         <h1 className="text-2xl sm:text-3xl font-black mb-2">Grand Theft Auto VI</h1>
-                        <p className="text-amber-400 text-xs font-bold uppercase tracking-widest mb-4">Exclusivité Ultimate 👑</p>
+                        <p className="text-amber-400 text-xs font-bold uppercase tracking-widest mb-4">{t("dash.gta6.exclusiveBadge")}</p>
                         <p className="text-white/50 text-sm leading-relaxed mb-7">
-                          L&apos;accès anticipé à l&apos;univers de GTA 6 — Vice City, néons et
-                          ambiance next-gen — est réservé aux membres Ultimate. Passez à la
-                          formule Ultimate pour transformer vos photos en personnages de
-                          GTA 6 avant tout le monde.
+                          {t("dash.gta6.lockedDesc")}
                         </p>
                         <button
                           onClick={goToSubscription}
                           className="btn-primary-orange inline-flex items-center gap-2 px-6 py-3 text-sm font-bold"
                         >
                           <Crown className="w-4 h-4" />
-                          Passer à Ultimate
+                          {t("dash.gta6.upgradeUlt")}
                         </button>
                       </div>
                     </div>
@@ -1424,12 +1421,11 @@ function DashboardContent() {
                       {/* ── En-tête — remplace les onglets de la section Créer ── */}
                       <div className="pt-10 pb-6 flex flex-col items-center text-center gap-2">
                         <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-3 py-1 rounded-full bg-amber-400/10 text-amber-400 border border-amber-400/30 uppercase tracking-widest">
-                          <Crown className="w-3 h-3" />Exclusivité Ultimate
+                          <Crown className="w-3 h-3" />{t("dash.gta6.exclusive")}
                         </span>
                         <h1 className="text-3xl font-black">Grand Theft Auto VI</h1>
                         <p className="text-white/40 text-sm max-w-md">
-                          Accès anticipé : glissez-vous dans l&apos;univers de GTA 6 —
-                          direction Vice City, ses néons et son ambiance next-gen.
+                          {t("dash.gta6.headerDesc")}
                         </p>
                       </div>
 
@@ -1443,14 +1439,14 @@ function DashboardContent() {
                         <div className="lg:col-span-1">
                           <AnimatedCard delay={0} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-4">
                             <h2 className="font-semibold text-sm mb-3 flex items-center justify-between">
-                              <span>Votre photo</span>
+                              <span>{t("dash.create.yourPhoto")}</span>
                               <StepBadge n={1} />
                             </h2>
                             <UploadBox
                               onFileSelected={(f,p)=>{setStyleFile(f);setStylePreview(p);setError(null);}}
                               onClear={()=>{setStyleFile(null);setStylePreview(null);}}
                               preview={stylePreview}
-                              label="Votre photo (visage bien visible)"
+                              label={t("dash.create.yourPhotoLabel")}
                             />
                           </AnimatedCard>
                         </div>
@@ -1462,17 +1458,17 @@ function DashboardContent() {
                           <AnimatedCard delay={0.08} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-3">
                             <h2 className="font-semibold text-sm mb-1.5 flex items-center justify-between">
                               <span className="flex items-center gap-2">
-                                Votre scène GTA 6
+                                {t("dash.gta6.yourScene")}
                                 <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border text-amber-400 border-amber-400/40 bg-amber-400/10">
-                                  Ultimate ✨
+                                  {t("dash.badge.ultimate")}
                                 </span>
                               </span>
-                              <span className="text-white/30 text-[10px] font-normal">optionnel</span>
+                              <span className="text-white/30 text-[10px] font-normal">{t("dash.create.optional")}</span>
                             </h2>
                             <textarea
                               value={details}
                               onChange={e => setDetails(e.target.value)}
-                              placeholder="Décrivez votre scène façon GTA 6 : tenue, ambiance Vice City, néons, plage, attitude…"
+                              placeholder={t("dash.gta6.scenePlaceholder")}
                               rows={2}
                               maxLength={300}
                               className="w-full bg-surface border border-surface-border rounded-xl px-3 py-2 text-white text-sm placeholder-white/20 focus:outline-none focus:border-amber-400/60 resize-none"
@@ -1481,7 +1477,7 @@ function DashboardContent() {
 
                           {/* ── Taille de l'image générée ── */}
                           <AnimatedCard delay={0.1} className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl p-3">
-                            <h2 className="font-semibold text-sm mb-2">Taille de l&apos;image</h2>
+                            <h2 className="font-semibold text-sm mb-2">{t("dash.gta6.imageSize")}</h2>
                             <div className="grid grid-cols-3 gap-2">
                               {GTA6_ASPECTS.map((a) => (
                                 <button
@@ -1497,7 +1493,7 @@ function DashboardContent() {
                                   <span className={`${a.box} rounded-[3px] border-2 ${
                                     gta6Aspect === a.id ? "border-amber-400" : "border-white/30"
                                   }`} />
-                                  <span className="text-xs font-semibold">{a.label}</span>
+                                  <span className="text-xs font-semibold">{t(`dash.aspect.${a.id}`)}</span>
                                 </button>
                               ))}
                             </div>
@@ -1537,7 +1533,7 @@ function DashboardContent() {
                         <div className="sticky top-6 max-h-[calc(100vh-3.5rem)] overflow-y-auto rounded-2xl">
                           <div className="bg-surface/70 backdrop-blur-xl border border-surface-border rounded-2xl overflow-hidden">
                             <div className="px-4 py-3 border-b border-surface-border flex items-center justify-between">
-                              <h3 className="font-semibold text-sm">Résultat</h3>
+                              <h3 className="font-semibold text-sm">{t("dash.result.title")}</h3>
                               {resultUrl && (
                                 <button
                                   onClick={() => { setResultUrl(null); setResultStyle(""); }}
@@ -1572,7 +1568,7 @@ function DashboardContent() {
                                       transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                                       className="w-12 h-12 rounded-full border-2 border-accent-orange/30 border-t-accent-orange"
                                     />
-                                    <p className="text-white/50 text-sm font-medium">Génération en cours…</p>
+                                    <p className="text-white/50 text-sm font-medium">{t("dash.gen.inProgress")}</p>
                                     <div className="w-full h-1.5 bg-surface-hover rounded-full overflow-hidden">
                                       <motion.div
                                         className="h-full gradient-bg-orange-animated rounded-full"
