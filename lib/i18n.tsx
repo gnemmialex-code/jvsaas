@@ -694,6 +694,10 @@ const translations: Record<Locale, Dict> = {
     "admin.confirmDelete": "Confirmer la suppression",
     "admin.deleteWarn1": "Suppression définitive de",
     "admin.deleteWarn2": ": compte, générations et historique de crédits. Irréversible.",
+    "nf.title": "Page introuvable",
+    "nf.subtitle": "Cette page n'existe pas ou a été déplacée.",
+    "nf.back": "Retour à l'accueil",
+    "intro.volume": "Régler le volume",
   },
   en: {
     "nav.gta6.label": "Grand Theft Auto VI",
@@ -1369,6 +1373,10 @@ const translations: Record<Locale, Dict> = {
     "admin.confirmDelete": "Confirm deletion",
     "admin.deleteWarn1": "Permanent deletion of",
     "admin.deleteWarn2": ": account, generations and credit history. Irreversible.",
+    "nf.title": "Page not found",
+    "nf.subtitle": "This page doesn't exist or has been moved.",
+    "nf.back": "Back to home",
+    "intro.volume": "Adjust the volume",
   },
   es: {
     "nav.gta6.label": "Grand Theft Auto VI",

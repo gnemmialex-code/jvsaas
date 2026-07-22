@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Volume2, VolumeX } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 const AUDIO_SRC = "/audio/light_music-mind-relaxation-183925.mp3";
 
@@ -14,6 +15,7 @@ const TARGET_VOLUME = 0.35;
 const FADE_IN_MS = 2500;
 
 export default function IntroReveal() {
+  const { t } = useI18n();
   const [volume, setVolume] = useState(TARGET_VOLUME);
   const [showSlider, setShowSlider] = useState(false);
   const [audioBlocked, setAudioBlocked] = useState(false);
@@ -125,7 +127,7 @@ export default function IntroReveal() {
 
         <button
           onClick={handleVolumeButtonClick}
-          aria-label="Régler le volume"
+          aria-label={t("intro.volume")}
           className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white transition-colors"
         >
           {volume === 0 || audioBlocked ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
