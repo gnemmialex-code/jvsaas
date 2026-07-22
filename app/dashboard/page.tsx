@@ -1584,7 +1584,7 @@ function DashboardContent() {
                                       className="mt-1 flex items-center gap-1.5 px-4 py-1.5 rounded-xl border border-red-500/40 text-red-400 hover:bg-red-500/10 text-xs font-semibold transition-all"
                                     >
                                       <StopCircle className="w-3.5 h-3.5" />
-                                      Arrêter
+                                      {t("dash.result.stop")}
                                     </motion.button>
                                   </>
                                 ) : (
@@ -1592,8 +1592,8 @@ function DashboardContent() {
                                     <div className="w-16 h-16 rounded-2xl bg-surface-hover flex items-center justify-center">
                                       <Film className="w-7 h-7 text-white/20" />
                                     </div>
-                                    <p className="text-white/40 text-sm">Votre personnage GTA 6 apparaîtra ici</p>
-                                    <p className="text-white/20 text-xs">Uploadez une photo et appuyez sur Générer</p>
+                                    <p className="text-white/40 text-sm">{t("dash.gta6.resultPlaceholder")}</p>
+                                    <p className="text-white/20 text-xs">{t("dash.gta6.resultPlaceholderSub")}</p>
                                   </>
                                 )}
                               </div>
@@ -1615,8 +1615,8 @@ function DashboardContent() {
                   <div className="mb-7 pt-8">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h1 className="text-3xl font-black mb-1">Historique</h1>
-                        <p className="text-white/40">{generations.length} création{generations.length!==1?"s":""}</p>
+                        <h1 className="text-3xl font-black mb-1">{t("dash.nav.history")}</h1>
+                        <p className="text-white/40">{generations.length} {t(generations.length!==1?"dash.hist.creations":"dash.hist.creation")}</p>
                       </div>
                       {generations.length > 0 && !confirmDeleteAll && (
                         <button
@@ -1624,24 +1624,24 @@ function DashboardContent() {
                           className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-500/15 border border-red-500 text-red-400 hover:bg-red-500/30 hover:text-white text-xs font-semibold transition-all mt-1"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
-                          Tout supprimer
+                          {t("dash.hist.deleteAll")}
                         </button>
                       )}
                       {confirmDeleteAll && (
                         <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2">
-                          <p className="text-red-400 text-xs font-medium">Supprimer les {generations.length} images ?</p>
+                          <p className="text-red-400 text-xs font-medium">{t("dash.hist.confirmDelete").replace("{n}", String(generations.length))}</p>
                           <button
                             onClick={handleDeleteAll}
                             disabled={deletingAll}
                             className="px-2.5 py-1 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition-all disabled:opacity-50"
                           >
-                            {deletingAll ? "…" : "Confirmer"}
+                            {deletingAll ? "…" : t("dash.hist.confirm")}
                           </button>
                           <button
                             onClick={() => setConfirmDeleteAll(false)}
                             className="px-2.5 py-1 rounded-lg border border-surface-border text-white/50 hover:text-white text-xs transition-all"
                           >
-                            Annuler
+                            {t("dash.hist.cancel")}
                           </button>
                         </div>
                       )}
@@ -1650,8 +1650,8 @@ function DashboardContent() {
                       <div className="mt-3 flex items-center gap-3 bg-accent-orange/8 border border-accent-orange/20 rounded-xl px-4 py-2.5">
                         <Lock className="w-3.5 h-3.5 text-accent-orange flex-shrink-0" />
                         <p className="text-white/50 text-xs">
-                          Plan Essentiel — historique limité à <strong className="text-white/70">20 images</strong>.{" "}
-                          <Link href="/pricing" className="text-accent-orange hover:underline">Passez à Pro</Link> pour 100 images ou à Elite pour l&apos;historique illimité.
+                          {t("dash.hist.essNote1")} <strong className="text-white/70">{t("dash.hist.essNote20")}</strong>.{" "}
+                          <Link href="/pricing" className="text-accent-orange hover:underline">{t("dash.hist.essNoteLink")}</Link> {t("dash.hist.essNote2")}
                         </p>
                       </div>
                     )}
@@ -1659,8 +1659,8 @@ function DashboardContent() {
                       <div className="mt-3 flex items-center gap-3 bg-accent-orange/8 border border-accent-orange/20 rounded-xl px-4 py-2.5">
                         <Sparkles className="w-3.5 h-3.5 text-accent-orange flex-shrink-0" />
                         <p className="text-white/50 text-xs">
-                          Plan Pro — historique jusqu&apos;à <strong className="text-white/70">100 images</strong>.{" "}
-                          <Link href="/pricing" className="text-accent-orange hover:underline">Passez à Elite</Link> pour un historique illimité.
+                          {t("dash.hist.proNote1")} <strong className="text-white/70">{t("dash.hist.proNote100")}</strong>.{" "}
+                          <Link href="/pricing" className="text-accent-orange hover:underline">{t("dash.hist.proNoteLink")}</Link> {t("dash.hist.proNote2")}
                         </p>
                       </div>
                     )}
@@ -1668,10 +1668,10 @@ function DashboardContent() {
                   {generations.length === 0 ? (
                     <div className="text-center py-24 card">
                       <Sparkles className="w-10 h-10 text-white/20 mx-auto mb-4" />
-                      <p className="text-white/50 font-semibold mb-2">Aucune création</p>
-                      <p className="text-white/30 text-sm mb-5">Lance ta première génération</p>
+                      <p className="text-white/50 font-semibold mb-2">{t("dash.hist.empty")}</p>
+                      <p className="text-white/30 text-sm mb-5">{t("dash.hist.emptySub")}</p>
                       <button onClick={()=>changeView("create")} className="btn-primary-orange inline-flex items-center gap-2">
-                        <Sparkles className="w-4 h-4" />Créer maintenant
+                        <Sparkles className="w-4 h-4" />{t("dash.hist.createNow")}
                       </button>
                     </div>
                   ) : (
@@ -1717,9 +1717,9 @@ function DashboardContent() {
                   <div className="mb-7 pt-8">
                     <h1 className="text-3xl font-black mb-1 flex items-center gap-3">
                       <Gift className="w-7 h-7 text-accent-orange" />
-                      Parrainage
+                      {t("dash.nav.referral")}
                     </h1>
-                    <p className="text-white/40">Invitez vos amis et gagnez des crédits gratuits</p>
+                    <p className="text-white/40">{t("dash.ref.subtitle")}</p>
                   </div>
 
                   <div className="max-w-3xl space-y-5">
@@ -1733,8 +1733,8 @@ function DashboardContent() {
                           </div>
                           <p className="text-2xl font-black text-accent-orange">+200</p>
                         </div>
-                        <p className="font-bold text-white text-sm mb-1">crédits pour vous</p>
-                        <p className="text-white/45 text-xs leading-relaxed">À chaque ami qui s&apos;inscrit avec votre lien de parrainage</p>
+                        <p className="font-bold text-white text-sm mb-1">{t("dash.ref.creditsForYou")}</p>
+                        <p className="text-white/45 text-xs leading-relaxed">{t("dash.ref.creditsForYouDesc")}</p>
                       </AnimatedCard>
                       <AnimatedCard delay={0.08} className="card border-green-500/25 bg-green-500/5">
                         <div className="flex items-center gap-3 mb-2">
@@ -1743,8 +1743,8 @@ function DashboardContent() {
                           </div>
                           <p className="text-2xl font-black text-green-400">+100</p>
                         </div>
-                        <p className="font-bold text-white text-sm mb-1">crédits pour votre ami</p>
-                        <p className="text-white/45 text-xs leading-relaxed">En plus des 100 crédits de bienvenue, soit 200 crédits au total</p>
+                        <p className="font-bold text-white text-sm mb-1">{t("dash.ref.creditsForFriend")}</p>
+                        <p className="text-white/45 text-xs leading-relaxed">{t("dash.ref.creditsForFriendDesc")}</p>
                       </AnimatedCard>
                     </div>
 
@@ -1752,14 +1752,14 @@ function DashboardContent() {
                       /* Invité — incite à se connecter */
                       <div className="card text-center py-12">
                         <Lock className="w-10 h-10 text-white/20 mx-auto mb-4" />
-                        <p className="font-bold text-white mb-2">Connectez-vous pour obtenir votre code parrain</p>
-                        <p className="text-white/40 text-sm mb-6">Chaque compte dispose d&apos;un code personnalisé unique à partager</p>
+                        <p className="font-bold text-white mb-2">{t("dash.ref.loginTitle")}</p>
+                        <p className="text-white/40 text-sm mb-6">{t("dash.ref.loginSub")}</p>
                         <div className="flex items-center justify-center gap-3">
                           <Link href="/login" className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl border border-accent-orange/40 text-accent-orange hover:bg-accent-orange/10 text-sm font-bold transition-all">
-                            <LogIn className="w-4 h-4" />Se connecter
+                            <LogIn className="w-4 h-4" />{t("login.submit")}
                           </Link>
                           <Link href="/register" className="btn-primary-orange flex items-center gap-1.5 px-5 py-2.5 text-sm">
-                            <UserPlus className="w-4 h-4" />Créer un compte
+                            <UserPlus className="w-4 h-4" />{t("register.title")}
                           </Link>
                         </div>
                       </div>
@@ -1773,7 +1773,7 @@ function DashboardContent() {
                         <AnimatedCard className="card space-y-4">
                           <h2 className="font-bold flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-accent-orange" />
-                            Votre code personnalisé
+                            {t("dash.ref.yourCode")}
                           </h2>
 
                           {/* Code */}
@@ -1786,13 +1786,13 @@ function DashboardContent() {
                               className="flex items-center gap-1.5 px-4 py-3 rounded-xl border border-surface-border text-white/60 hover:text-white hover:border-accent-orange/40 text-sm font-semibold transition-all flex-shrink-0"
                             >
                               {copiedField === "code" ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
-                              {copiedField === "code" ? "Copié" : "Copier"}
+                              {copiedField === "code" ? t("dash.ref.copied") : t("dash.ref.copy")}
                             </button>
                           </div>
 
                           {/* Lien de partage */}
                           <div>
-                            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-1.5">Votre lien de parrainage</p>
+                            <p className="text-xs font-semibold text-white/40 uppercase tracking-wider mb-1.5">{t("dash.ref.shareLinkLabel")}</p>
                             <div className="flex items-center gap-2">
                               <div className="flex-1 bg-surface-hover border border-surface-border rounded-xl px-4 py-3 text-white/70 text-sm truncate select-all">
                                 {`${typeof window !== "undefined" ? window.location.origin : ""}/register?ref=${referral.code}`}
@@ -1802,11 +1802,11 @@ function DashboardContent() {
                                 className="btn-primary-orange flex items-center gap-1.5 px-4 py-3 text-sm flex-shrink-0"
                               >
                                 {copiedField === "link" ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                                {copiedField === "link" ? "Copié !" : "Copier le lien"}
+                                {copiedField === "link" ? t("dash.ref.copiedLink") : t("dash.ref.copyLink")}
                               </button>
                             </div>
                             <p className="text-white/30 text-xs mt-2">
-                              💡 Partagez ce lien : dès qu&apos;un ami crée son compte avec, vous recevez automatiquement vos 200 crédits.
+                              {t("dash.ref.shareTip")}
                             </p>
                           </div>
                         </AnimatedCard>
@@ -1815,11 +1815,11 @@ function DashboardContent() {
                         <div className="grid grid-cols-2 gap-4">
                           <AnimatedCard delay={0.08} className="card text-center">
                             <p className="text-3xl font-black gradient-text">{referral.referrals}</p>
-                            <p className="text-white/40 text-sm mt-1">Filleul{referral.referrals !== 1 ? "s" : ""} inscrit{referral.referrals !== 1 ? "s" : ""}</p>
+                            <p className="text-white/40 text-sm mt-1">{t(referral.referrals !== 1 ? "dash.ref.godchildren" : "dash.ref.godchild")}</p>
                           </AnimatedCard>
                           <AnimatedCard delay={0.16} className="card text-center">
                             <p className="text-3xl font-black text-green-400">+{referral.credits_earned}</p>
-                            <p className="text-white/40 text-sm mt-1">Crédits gagnés</p>
+                            <p className="text-white/40 text-sm mt-1">{t("dash.ref.creditsEarned")}</p>
                           </AnimatedCard>
                         </div>
                       </>
@@ -1846,12 +1846,12 @@ function DashboardContent() {
                 <motion.div key="subscription" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
                   <div className="mb-7 pt-8 flex flex-col items-center text-center gap-4">
                     <div>
-                      <h1 className="text-3xl sm:text-4xl font-black mb-1 uppercase text-white">Choisissez vos avantages</h1>
+                      <h1 className="text-3xl sm:text-4xl font-black mb-1 uppercase text-white">{t("dash.sub.chooseBenefits")}</h1>
                       <p className="text-white/30 text-[10px] font-bold uppercase tracking-wide mt-2">
-                        Abonnement résiliable à tout moment dans les paramètres
+                        {t("dash.sub.cancelAnytime")}
                       </p>
                       <span className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/30 mt-2">
-                        <ShieldCheck className="w-3 h-3" />SATISFAIT OU REMBOURSÉ IMMÉDIATEMENT
+                        <ShieldCheck className="w-3 h-3" />{t("dash.sub.guarantee")}
                       </span>
                     </div>
                     {/* Toggle Mensuel / Annuel */}
@@ -1862,7 +1862,7 @@ function DashboardContent() {
                           planBilling === "monthly" ? "bg-accent-orange text-white" : "text-white/50 hover:text-white"
                         }`}
                       >
-                        Mensuel
+                        {t("dash.sub.monthly")}
                       </button>
                       <button
                         onClick={() => setPlanBilling("yearly")}
@@ -1870,7 +1870,7 @@ function DashboardContent() {
                           planBilling === "yearly" ? "bg-accent-orange text-white" : "text-white/50 hover:text-white"
                         }`}
                       >
-                        Annuel
+                        {t("dash.sub.yearly")}
                       </button>
                     </div>
                   </div>
@@ -1899,7 +1899,7 @@ function DashboardContent() {
                             <span className={`absolute -top-2 left-1/2 -translate-x-1/2 flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap ${
                               isBestValue ? "bg-green-500 text-white" : "bg-amber-400 text-black"
                             }`}>
-                              <Sparkles className="w-2.5 h-2.5" />{plan.badge}
+                              <Sparkles className="w-2.5 h-2.5" />{isBestValue ? t("dash.sub.bestValue") : t("dash.sub.exclusive")}
                             </span>
                           )}
 
@@ -1915,29 +1915,29 @@ function DashboardContent() {
                           <p className="mb-2 leading-none">
                             <span className={`text-4xl font-black ${isExclusif ? "gradient-text-orange-subtle" : ""}`}>{priceInt}</span>
                             <span className={`text-lg font-black align-top ${isExclusif ? "gradient-text-orange-subtle" : ""}`}>,{priceDec}</span>
-                            <span className="text-white/40 text-sm">€ /mois</span>
+                            <span className="text-white/40 text-sm">€ {t("pricing.perMonth")}</span>
                           </p>
 
                           {/* Garantie */}
                           <span className="inline-flex items-center gap-1.5 self-start text-[10px] font-bold px-2.5 py-1 rounded-full bg-green-500/15 text-green-400 border border-green-500/30 mb-1.5">
-                            <ShieldCheck className="w-3 h-3" />SATISFAIT OU REMBOURSÉ IMMÉDIATEMENT
+                            <ShieldCheck className="w-3 h-3" />{t("dash.sub.guarantee")}
                           </span>
                           {planBilling === "monthly" ? (
                             <p className="text-white/30 text-[9px] uppercase tracking-wide mb-4">
-                              Prélèvement tous les 28 jours
+                              {t("dash.sub.every28")}
                             </p>
                           ) : (
                             <p className="text-white/25 text-[8px] uppercase tracking-wide mb-4">
-                              {`Soit ${plan.yearlyTotal}€/an en annuel`}
+                              {t("dash.sub.yearlyTotal").replace("{n}", String(plan.yearlyTotal))}
                             </p>
                           )}
 
                           {/* Forfait */}
-                          <p className="text-white/40 text-[10px] font-bold uppercase tracking-wide mb-2">Votre forfait inclut :</p>
+                          <p className="text-white/40 text-[10px] font-bold uppercase tracking-wide mb-2">{t("dash.sub.includes")}</p>
                           <div className={`text-center mb-4 py-4 px-3 rounded-xl border ${
                             isBestValue ? "border-green-500/30 bg-green-500/5" : isExclusif ? "border-amber-400/30 bg-amber-400/5" : "border-surface-border bg-surface-hover"
                           }`}>
-                            <p className="text-3xl font-black gradient-text-orange-subtle">{plan.credits}<span className="text-sm text-white/50 font-semibold"> crédits/mois</span></p>
+                            <p className="text-3xl font-black gradient-text-orange-subtle">{plan.credits}<span className="text-sm text-white/50 font-semibold"> {t("dash.sub.creditsPerMonth")}</span></p>
                             {"bonus" in plan && plan.bonus && (
                               <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-green-500/15 border border-green-500/30 text-green-400 text-[10px] font-bold">
                                 🎁 {plan.bonus}
@@ -1946,7 +1946,7 @@ function DashboardContent() {
                             <p className="text-white/35 text-[11px] mt-1.5">{plan.creditsDesc}</p>
                           </div>
 
-                          <p className="text-white/40 text-[10px] font-bold uppercase tracking-wide mb-2">Inclus dans le plan :</p>
+                          <p className="text-white/40 text-[10px] font-bold uppercase tracking-wide mb-2">{t("dash.sub.includedInPlan")}</p>
                           <ul className="space-y-2 mb-5 flex-1">
                             {/* Les lignes hl (meilleures différences du plan) ressortent en plus clair */}
                             {plan.features.map(f=>(
@@ -1960,9 +1960,9 @@ function DashboardContent() {
                             ))}
                           </ul>
                           {isCurrent ? (
-                            <div className="w-full py-2.5 rounded-xl text-center text-sm font-semibold bg-green-500/10 text-green-400 border border-green-500/20">Plan actif</div>
+                            <div className="w-full py-2.5 rounded-xl text-center text-sm font-semibold bg-green-500/10 text-green-400 border border-green-500/20">{t("dash.sub.activePlan")}</div>
                           ) : (
-                            <Link href="/pricing" className="btn-primary-orange text-center w-full text-sm py-2.5">Passer à {plan.name}</Link>
+                            <Link href="/pricing" className="btn-primary-orange text-center w-full text-sm py-2.5">{t("dash.sub.upgradeTo").replace("{name}", plan.name)}</Link>
                           )}
                         </motion.div>
                       );
@@ -1975,35 +1975,35 @@ function DashboardContent() {
               {navView === "settings" && (
                 <motion.div key="settings" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
                   <div className="mb-7 pt-8">
-                    <h1 className="text-3xl font-black mb-1">Paramètres</h1>
-                    <p className="text-white/40">Gérez votre compte et votre abonnement</p>
+                    <h1 className="text-3xl font-black mb-1">{t("dash.nav.settings")}</h1>
+                    <p className="text-white/40">{t("dash.set.subtitle")}</p>
                   </div>
                   <div className="max-w-xs sm:max-w-md lg:max-w-6xl space-y-3 pb-10">
                     {/* Sur PC : les 4 cartes tiennent sur une seule et même ligne ;
                         sur mobile/tablette elles restent empilées (taille réduite). */}
                     <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-4 lg:gap-3 lg:items-start">
                     <div className="card !p-3 space-y-2.5">
-                      <h2 className="font-bold text-sm">Informations du compte</h2>
+                      <h2 className="font-bold text-sm">{t("dash.set.accountInfo")}</h2>
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl gradient-bg-orange-animated flex items-center justify-center text-white text-base font-black">{userInitial}</div>
                         <div className="min-w-0">
                           <p className="font-semibold truncate text-sm">{displayName || userEmail || "—"}</p>
                           <p className="text-white/40 text-xs">
-                            Membre depuis {stats?.member_since ? new Date(stats.member_since).toLocaleDateString("fr-FR",{month:"long",year:"numeric"}) : "—"}
+                            {t("dash.set.memberSince").replace("{date}", stats?.member_since ? new Date(stats.member_since).toLocaleDateString(undefined,{month:"long",year:"numeric"}) : "—")}
                           </p>
                         </div>
                       </div>
 
                       {/* Nom (optionnel, modifiable) */}
                       <div className="flex items-center justify-between gap-3 py-1.5 border-t border-surface-border">
-                        <span className="text-white/50 text-xs flex-shrink-0">Nom</span>
+                        <span className="text-white/50 text-xs flex-shrink-0">{t("dash.set.name")}</span>
                         {editingName ? (
                           <div className="flex items-center gap-2 flex-1 justify-end">
                             <input
                               type="text"
                               value={displayName}
                               onChange={(e) => setDisplayName(e.target.value)}
-                              placeholder="Votre nom"
+                              placeholder={t("dash.set.namePlaceholder")}
                               maxLength={40}
                               className="bg-surface border border-surface-border rounded-lg px-3 py-1.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-accent-orange/60 w-40"
                             />
