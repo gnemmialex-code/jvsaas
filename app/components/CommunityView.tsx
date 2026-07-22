@@ -8,6 +8,7 @@ import {
   Send, ImagePlus, X, Users, ShieldCheck,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useI18n } from "@/lib/i18n";
 
 /* ─── Types ──────────────────────────────────────────────── */
 interface Topic {
@@ -39,10 +40,10 @@ const SIZE_CLASSES: Record<Message["text_size"], string> = {
   title:  "text-2xl font-black",
 };
 const SIZE_OPTIONS: { id: Message["text_size"]; label: string }[] = [
-  { id: "small",  label: "Petit"  },
+  { id: "small",  label: "small"  },
   { id: "normal", label: "Normal" },
-  { id: "large",  label: "Grand"  },
-  { id: "title",  label: "Titre"  },
+  { id: "large",  label: "large"  },
+  { id: "title",  label: "title"  },
 ];
 
 /* Icône des 3 discussions par défaut */
@@ -57,24 +58,24 @@ const POLL_MS = 5_000;
 
 /* ─── Écran verrouillé (non connecté / pas Ultimate) ─────── */
 function LockedPanel({ isAuthed, onUpgrade }: { isAuthed: boolean | null; onUpgrade: () => void }) {
+  const { t } = useI18n();
   return (
     <div className="max-w-lg mx-auto card text-center py-14 px-8 mt-4">
       <div className="w-16 h-16 rounded-2xl bg-amber-400/15 border border-amber-400/30 flex items-center justify-center mx-auto mb-5">
         <Crown className="w-8 h-8 text-amber-400" />
       </div>
       <h2 className="text-2xl font-black mb-2">
-        Communauté <span className="gradient-text-orange-subtle">Ultimate</span>
+        {t("dash.nav.community")} <span className="gradient-text-orange-subtle">Ultimate</span>
       </h2>
       <p className="text-white/50 text-sm leading-relaxed mb-6">
-        Cet espace privé est réservé aux membres de la formule <strong className="text-amber-400">Ultimate</strong> :
-        discussions entre membres, annonces exclusives et cadeaux réguliers.
+        {t("comm.locked.desc1")} <strong className="text-amber-400">Ultimate</strong> {t("comm.locked.desc2")}
       </p>
       <ul className="text-left space-y-2 mb-8 max-w-xs mx-auto">
         {[
-          "Discutez avec les autres membres Ultimate",
-          "Créez vos propres discussions",
-          "Annonces et nouveautés en avant-première",
-          "Cadeaux et surprises exclusifs",
+          t("comm.locked.f1"),
+          t("comm.locked.f2"),
+          t("comm.locked.f3"),
+          t("comm.locked.f4"),
         ].map((f) => (
           <li key={f} className="flex items-start gap-2 text-sm text-white/60">
             <ShieldCheck className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />{f}
@@ -83,7 +84,7 @@ function LockedPanel({ isAuthed, onUpgrade }: { isAuthed: boolean | null; onUpgr
       </ul>
       <button onClick={onUpgrade} className="btn-primary-orange inline-flex items-center gap-2 px-6 py-3 text-sm font-bold">
         <Crown className="w-4 h-4" />
-        {isAuthed === false ? "Découvrir Ultimate" : "Passer à Ultimate"}
+        {isAuthed === false ? t("comm.discoverUlt") : t("dash.gta6.upgradeUlt")}
       </button>
     </div>
   );
@@ -99,6 +100,7 @@ export default function CommunityView({
   onUpgrade: () => void;
 }) {
   const canAccess = isAdmin || (isAuthed === true && tier === "elite");
+  const { t } = useI18n();
 
   const [userId, setUserId] = useState<string | null>(null);
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -141,11 +143,11 @@ export default function CommunityView({
       .then((res) => res.json().then((d) => ({ ok: res.ok, d })))
       .then(({ ok, d }) => {
         if (cancelled) return;
-        if (!ok) { setTopicsError(d.error ?? "Erreur de chargement"); return; }
+        if (!ok) { setTopicsError(d.error ?? t("comm.loadError")); return; }
         setTopics(d.topics ?? []);
         if (d.topics?.length) setSelectedId((prev) => prev ?? d.topics[0].id);
       })
-      .catch(() => { if (!cancelled) setTopicsError("Erreur de connexion"); })
+      .catch(() => { if (!cancelled) setTopicsError(t("login.errorGeneric")); })
       .finally(() => { if (!cancelled) setTopicsLoading(false); });
     return () => { cancelled = true; };
   }, [canAccess]);
@@ -182,7 +184,7 @@ export default function CommunityView({
   if (!canAccess) return <LockedPanel isAuthed={isAuthed} onUpgrade={onUpgrade} />;
 
   const handleCreateTopic = async () => {
-    if (newTitle.trim().length < 3) { toast.error("Titre trop court (3 caractères minimum)"); return; }
+    if (newTitle.trim().length < 3) { toast.error(t("comm.titleTooShort")); return; }
     setSavingTopic(true);
     try {
       const res = await fetch("/api/community/topics", {
@@ -191,7 +193,7 @@ export default function CommunityView({
         body: JSON.stringify({ title: newTitle.trim(), description: newDesc.trim() }),
       });
       const d = await res.json();
-      if (!res.ok) { toast.error(d.error ?? "Impossible de créer la discussion"); return; }
+      if (!res.ok) { toast.error(d.error ?? t("comm.createError")); return; }
       // La nouvelle discussion apparaît juste après les 3 par défaut
       setTopics((prev) => {
         const defaults = prev.filter((t) => t.is_default);
@@ -202,9 +204,9 @@ export default function CommunityView({
       setCreating(false);
       setNewTitle("");
       setNewDesc("");
-      toast.success("Discussion créée !");
+      toast.success(t("comm.created"));
     } catch {
-      toast.error("Erreur de connexion");
+      toast.error(t("login.errorGeneric"));
     } finally {
       setSavingTopic(false);
     }
@@ -212,8 +214,8 @@ export default function CommunityView({
 
   const handlePickImage = (f: File | null) => {
     if (!f) return;
-    if (!f.type.startsWith("image/")) { toast.error("Seules les images sont acceptées"); return; }
-    if (f.size > 5 * 1024 * 1024) { toast.error("Image trop lourde (5 Mo maximum)"); return; }
+    if (!f.type.startsWith("image/")) { toast.error(t("comm.imagesOnly")); return; }
+    if (f.size > 5 * 1024 * 1024) { toast.error(t("comm.imageTooBig")); return; }
     setImageFile(f);
     setImagePreview(URL.createObjectURL(f));
   };
@@ -237,12 +239,12 @@ export default function CommunityView({
       if (imageFile) form.append("image", imageFile);
       const res = await fetch("/api/community/messages", { method: "POST", body: form });
       const d = await res.json();
-      if (!res.ok) { toast.error(d.error ?? "Impossible d'envoyer le message"); return; }
+      if (!res.ok) { toast.error(d.error ?? t("comm.sendError")); return; }
       setMessages((prev) => [...prev, d.message]);
       setContent("");
       clearImage();
     } catch {
-      toast.error("Erreur de connexion");
+      toast.error(t("login.errorGeneric"));
     } finally {
       setSending(false);
     }
@@ -253,12 +255,12 @@ export default function CommunityView({
       <div className="mb-6 pt-8">
         <h1 className="text-3xl font-black mb-1 flex items-center gap-3">
           <Users className="w-7 h-7 text-amber-400" />
-          Communauté
+          {t("dash.nav.community")}
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border text-amber-400 border-amber-400/40 bg-amber-400/10">
-            Ultimate ✨
+            {t("dash.badge.ultimate")}
           </span>
         </h1>
-        <p className="text-white/40">L&apos;espace privé des membres Ultimate — discussions, annonces et cadeaux</p>
+        <p className="text-white/40">{t("comm.subtitle")}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[300px,1fr] gap-4 pb-10">
@@ -270,7 +272,7 @@ export default function CommunityView({
             className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-amber-400/40 text-amber-400 hover:bg-amber-400/10 text-sm font-bold transition-all"
           >
             <Plus className="w-4 h-4" />
-            Nouvelle discussion
+            {t("comm.newTopic")}
           </button>
 
           <AnimatePresence>
@@ -287,14 +289,14 @@ export default function CommunityView({
                     type="text"
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
-                    placeholder="Titre de la discussion"
+                    placeholder={t("comm.topicTitle")}
                     maxLength={80}
                     className="w-full bg-surface border border-surface-border rounded-xl px-3 py-2 text-white text-sm placeholder-white/25 focus:outline-none focus:border-amber-400/60"
                   />
                   <textarea
                     value={newDesc}
                     onChange={(e) => setNewDesc(e.target.value)}
-                    placeholder="Description (de quoi voulez-vous parler ?)"
+                    placeholder={t("comm.topicDesc")}
                     rows={3}
                     maxLength={500}
                     className="w-full bg-surface border border-surface-border rounded-xl px-3 py-2 text-white text-sm placeholder-white/25 focus:outline-none focus:border-amber-400/60 resize-none"
@@ -305,13 +307,13 @@ export default function CommunityView({
                       disabled={savingTopic || newTitle.trim().length < 3}
                       className="btn-primary-orange flex-1 py-2 text-sm font-bold disabled:opacity-50"
                     >
-                      {savingTopic ? "Création…" : "Créer"}
+                      {savingTopic ? t("comm.creating") : t("comm.create")}
                     </button>
                     <button
                       onClick={() => setCreating(false)}
                       className="px-3 py-2 rounded-xl border border-surface-border text-white/50 hover:text-white text-sm transition-all"
                     >
-                      Annuler
+                      {t("dash.hist.cancel")}
                     </button>
                   </div>
                 </div>
@@ -352,7 +354,7 @@ export default function CommunityView({
                         {topic.title}
                         {topic.admin_only && <Lock className="w-3 h-3 text-amber-400/70 flex-shrink-0" />}
                       </p>
-                      <p className="text-white/35 text-[11px] truncate">{topic.description || `Par ${topic.author_name}`}</p>
+                      <p className="text-white/35 text-[11px] truncate">{topic.description || t("comm.by").replace("{name}", topic.author_name)}</p>
                     </div>
                   </button>
                 );
@@ -371,7 +373,7 @@ export default function CommunityView({
                   {selectedTopic.title}
                   {selectedTopic.admin_only && (
                     <span className="text-[9px] font-bold px-2 py-0.5 rounded-full border text-amber-400 border-amber-400/40 bg-amber-400/10 flex items-center gap-1">
-                      <Lock className="w-2.5 h-2.5" />Annonces admin
+                      <Lock className="w-2.5 h-2.5" />{t("comm.adminAnnounce")}
                     </span>
                   )}
                 </h2>
@@ -389,8 +391,8 @@ export default function CommunityView({
                 ) : messages.length === 0 ? (
                   <div className="text-center py-16">
                     <MessageCircle className="w-9 h-9 text-white/15 mx-auto mb-3" />
-                    <p className="text-white/40 text-sm font-medium">Aucun message pour l&apos;instant</p>
-                    {canWrite && <p className="text-white/25 text-xs mt-1">Soyez le premier à écrire !</p>}
+                    <p className="text-white/40 text-sm font-medium">{t("comm.noMessages")}</p>
+                    {canWrite && <p className="text-white/25 text-xs mt-1">{t("comm.beFirst")}</p>}
                   </div>
                 ) : (
                   messages.map((msg) => {
@@ -412,8 +414,8 @@ export default function CommunityView({
                               <span className="text-[8px] font-bold px-1.5 py-px rounded-full bg-amber-400 text-black uppercase">Admin</span>
                             )}
                             <span className="text-white/25 text-[10px]">
-                              {new Date(msg.created_at).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })}{" "}
-                              {new Date(msg.created_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                              {new Date(msg.created_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })}{" "}
+                              {new Date(msg.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
                             </span>
                           </p>
                           {msg.content && (
@@ -445,7 +447,7 @@ export default function CommunityView({
                         <button
                           onClick={clearImage}
                           className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center"
-                          aria-label="Retirer l'image"
+                          aria-label={t("comm.removeImage")}
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -453,7 +455,7 @@ export default function CommunityView({
                     )}
                     {isAdmin && selectedTopic.admin_only && (
                       <div className="flex items-center gap-1.5">
-                        <span className="text-white/35 text-[10px] uppercase tracking-wide font-bold mr-1">Taille :</span>
+                        <span className="text-white/35 text-[10px] uppercase tracking-wide font-bold mr-1">{t("comm.size")}</span>
                         {SIZE_OPTIONS.map((s) => (
                           <button
                             key={s.id}
@@ -464,7 +466,7 @@ export default function CommunityView({
                                 : "border-surface-border text-white/40 hover:text-white"
                             }`}
                           >
-                            {s.label}
+                            {t(`comm.size.${s.id}`)}
                           </button>
                         ))}
                       </div>
@@ -480,7 +482,7 @@ export default function CommunityView({
                       <button
                         onClick={() => fileInputRef.current?.click()}
                         className="w-10 h-10 rounded-xl border border-surface-border text-white/40 hover:text-amber-400 hover:border-amber-400/40 flex items-center justify-center transition-all flex-shrink-0"
-                        aria-label="Joindre une image"
+                        aria-label={t("comm.attachImage")}
                       >
                         <ImagePlus className="w-4 h-4" />
                       </button>
@@ -490,7 +492,7 @@ export default function CommunityView({
                         onKeyDown={(e) => {
                           if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
                         }}
-                        placeholder="Écrivez votre message… (Entrée pour envoyer)"
+                        placeholder={t("comm.messagePlaceholder")}
                         rows={1}
                         maxLength={2000}
                         className="flex-1 bg-surface border border-surface-border rounded-xl px-3 py-2.5 text-white text-sm placeholder-white/25 focus:outline-none focus:border-amber-400/60 resize-none"
@@ -499,7 +501,7 @@ export default function CommunityView({
                         onClick={handleSend}
                         disabled={sending || (!content.trim() && !imageFile)}
                         className="btn-primary-orange w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 disabled:opacity-40"
-                        aria-label="Envoyer"
+                        aria-label={t("comm.send")}
                       >
                         {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                       </button>
@@ -508,7 +510,7 @@ export default function CommunityView({
                 ) : (
                   <p className="flex items-center justify-center gap-2 text-white/35 text-xs py-1.5">
                     <Lock className="w-3.5 h-3.5 text-amber-400/60" />
-                    Seul l&apos;administrateur peut écrire dans cette discussion — vous pouvez la consulter librement.
+                    {t("comm.readOnly")}
                   </p>
                 )}
               </div>
@@ -516,7 +518,7 @@ export default function CommunityView({
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 py-20">
               <Users className="w-10 h-10 text-white/15" />
-              <p className="text-white/40 text-sm">Sélectionnez une discussion à gauche</p>
+              <p className="text-white/40 text-sm">{t("comm.selectTopic")}</p>
             </div>
           )}
         </div>
