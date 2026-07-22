@@ -76,6 +76,7 @@ function planQualityBadge(plan?: string): { label: string; color: string } {
 
 /* Cadenas + appel à l'action affichés par-dessus une image floutée (compte gratuit) */
 function LockedOverlay({ onUnlock, compact = false }: { onUnlock: () => void; compact?: boolean }) {
+  const { t } = useI18n();
   return (
     <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 text-center p-3 bg-black/30">
       <div className={`rounded-2xl bg-accent-orange/20 border border-accent-orange/40 flex items-center justify-center ${compact ? "w-9 h-9" : "w-14 h-14"}`}>
@@ -83,9 +84,9 @@ function LockedOverlay({ onUnlock, compact = false }: { onUnlock: () => void; co
       </div>
       {!compact && (
         <>
-          <p className="text-white font-bold text-sm max-w-[260px]">Aperçu flouté</p>
+          <p className="text-white font-bold text-sm max-w-[260px]">{t("dash.locked.title")}</p>
           <p className="text-white/70 text-xs max-w-[260px] leading-relaxed">
-            Passez à une formule pour révéler votre image en haute définition.
+            {t("dash.locked.desc")}
           </p>
         </>
       )}
@@ -94,7 +95,7 @@ function LockedOverlay({ onUnlock, compact = false }: { onUnlock: () => void; co
         className={`btn-primary-orange flex items-center justify-center gap-1.5 font-semibold ${compact ? "px-2.5 py-1 text-[11px]" : "px-4 py-2 text-sm mt-1"}`}
       >
         <Crown className={compact ? "w-3 h-3" : "w-4 h-4"} />
-        Débloquer
+        {t("dash.locked.unlock")}
       </button>
     </div>
   );
@@ -725,7 +726,7 @@ function DashboardContent() {
       const d = await res.json().catch(() => ({}));
       if (res.ok && d.ok) {
         const end = d.current_period_end
-          ? new Date(d.current_period_end).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })
+          ? new Date(d.current_period_end).toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })
           : t("dash.toast.periodEnd");
         toast.success(t("dash.toast.subCancelled").replace("{end}", end), { duration: 7000 });
         setSubInfo(prev => prev ? { ...prev, cancel_at_period_end: true, current_period_end: d.current_period_end ?? prev.current_period_end } : prev);
@@ -1702,7 +1703,7 @@ function DashboardContent() {
                           </div>
                           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
                             <p className="text-white text-xs font-medium truncate">{gen.style}</p>
-                            <p className="text-white/50 text-xs">{new Date(gen.created_at).toLocaleDateString("fr-FR")}</p>
+                            <p className="text-white/50 text-xs">{new Date(gen.created_at).toLocaleDateString(undefined)}</p>
                           </div>
                         </motion.div>
                       ))}
@@ -2020,23 +2021,23 @@ function DashboardContent() {
                             onClick={() => setEditingName(true)}
                             className="font-medium text-white/80 text-sm hover:text-accent-orange transition-colors truncate max-w-[200px]"
                           >
-                            {displayName || <span className="text-white/35 italic">Ajouter un nom</span>}
+                            {displayName || <span className="text-white/35 italic">{t("dash.set.addName")}</span>}
                           </button>
                         )}
                       </div>
 
                       <div className="flex justify-between py-1.5 border-t border-surface-border">
-                        <span className="text-white/50 text-xs">Adresse e-mail</span>
+                        <span className="text-white/50 text-xs">{t("dash.set.email")}</span>
                         <span className="font-medium text-white/80 text-xs truncate max-w-[200px]">{userEmail ?? "—"}</span>
                       </div>
                       <div className="flex justify-between py-1.5 border-t border-surface-border">
-                        <span className="text-white/50 text-xs">Crédits actuels</span>
+                        <span className="text-white/50 text-xs">{t("dash.set.currentCredits")}</span>
                         <span className="font-bold text-accent-orange text-xs">{stats?.credits?.toLocaleString("fr-FR") ?? 0}</span>
                       </div>
                       <div className="flex justify-between py-1.5 border-t border-surface-border">
-                        <span className="text-white/50 text-xs">Date d&apos;inscription</span>
+                        <span className="text-white/50 text-xs">{t("dash.set.signupDate")}</span>
                         <span className="font-medium text-white/80 text-xs">
-                          {stats?.member_since ? new Date(stats.member_since).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}) : "—"}
+                          {stats?.member_since ? new Date(stats.member_since).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"}) : "—"}
                         </span>
                       </div>
                     </div>
@@ -2045,25 +2046,24 @@ function DashboardContent() {
                     <div className="card !p-3 space-y-2.5">
                       <h2 className="font-bold text-sm flex items-center gap-2">
                         <Lock className="w-4 h-4 text-white/40" />
-                        Mot de passe
+                        {t("dash.set.password")}
                       </h2>
                       <p className="text-white/40 text-xs leading-relaxed">
-                        Choisissez un nouveau mot de passe (8 caractères minimum). Aucune
-                        vérification de l&apos;ancien mot de passe ni de l&apos;e-mail n&apos;est demandée.
+                        {t("dash.set.passwordDesc")}
                       </p>
                       <div className="relative">
                         <input
                           type={showNewPassword ? "text" : "password"}
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          placeholder="Nouveau mot de passe"
+                          placeholder={t("dash.set.newPassword")}
                           autoComplete="new-password"
                           className="w-full bg-surface border border-surface-border rounded-xl px-3 py-2.5 pr-10 text-sm text-white placeholder-white/25 focus:outline-none focus:border-accent-orange/60"
                         />
                         <button
                           type="button"
                           onClick={() => setShowNewPassword(!showNewPassword)}
-                          aria-label={showNewPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                          aria-label={showNewPassword ? t("dash.set.hidePassword") : t("dash.set.showPassword")}
                           className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-colors"
                         >
                           {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -2073,12 +2073,12 @@ function DashboardContent() {
                         type={showNewPassword ? "text" : "password"}
                         value={confirmNewPassword}
                         onChange={(e) => setConfirmNewPassword(e.target.value)}
-                        placeholder="Confirmer le nouveau mot de passe"
+                        placeholder={t("dash.set.confirmNewPassword")}
                         autoComplete="new-password"
                         className="w-full bg-surface border border-surface-border rounded-xl px-3 py-2.5 text-sm text-white placeholder-white/25 focus:outline-none focus:border-accent-orange/60"
                       />
                       {confirmNewPassword.length > 0 && newPassword !== confirmNewPassword && (
-                        <p className="text-red-400 text-xs">Les mots de passe ne correspondent pas</p>
+                        <p className="text-red-400 text-xs">{t("register.errorPasswordMismatch")}</p>
                       )}
                       <button
                         onClick={handleChangePassword}
@@ -2090,7 +2090,7 @@ function DashboardContent() {
                         className="btn-primary-orange w-full py-2.5 text-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
                       >
                         <Lock className="w-4 h-4" />
-                        {savingPassword ? "Modification…" : "Changer le mot de passe"}
+                        {savingPassword ? t("reset.saving") : t("dash.set.changePassword")}
                       </button>
                     </div>
 
@@ -2101,15 +2101,15 @@ function DashboardContent() {
                           userPlanTier(stats?.plan) === "elite" ? "text-amber-400" :
                           userPlanTier(stats?.plan) === "pro"   ? "text-accent-orange" : "text-white/40"
                         }`} />
-                        Abonnement
+                        {t("dash.nav.subscription")}
                       </h2>
                       <div className="flex justify-between py-1.5 border-t border-surface-border">
-                        <span className="text-white/50 text-xs">Formule actuelle</span>
+                        <span className="text-white/50 text-xs">{t("dash.set.currentPlan")}</span>
                         <span className={`font-bold text-xs ${
                           userPlanTier(stats?.plan) === "elite" ? "text-amber-400" :
                           userPlanTier(stats?.plan) === "pro"   ? "text-accent-orange" : "text-white/70"
                         }`}>
-                          {userPlanTier(stats?.plan) === "elite" ? "Ultimate" : userPlanTier(stats?.plan) === "pro" ? "Essentiel" : isPaid ? "Découverte" : "Gratuit"}
+                          {userPlanTier(stats?.plan) === "elite" ? t("dash.plan.elite.name") : userPlanTier(stats?.plan) === "pro" ? t("dash.plan.pro.name") : isPaid ? t("dash.plan.essentiel.name") : t("dash.set.free")}
                         </span>
                       </div>
                       {subLoading ? (
@@ -2119,24 +2119,24 @@ function DashboardContent() {
                       ) : subInfo?.active ? (
                         <>
                           <div className="flex justify-between py-1.5 border-t border-surface-border">
-                            <span className="text-white/50 text-xs">Début de l&apos;abonnement</span>
+                            <span className="text-white/50 text-xs">{t("dash.set.subStart")}</span>
                             <span className="font-medium text-white/80 text-xs">
-                              {subInfo.started_at ? new Date(subInfo.started_at).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}) : "—"}
+                              {subInfo.started_at ? new Date(subInfo.started_at).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"}) : "—"}
                             </span>
                           </div>
                           <div className="flex justify-between py-1.5 border-t border-surface-border">
                             <span className="text-white/50 text-xs">
-                              {subInfo.cancel_at_period_end ? "Fin de l'abonnement" : "Prochain renouvellement"}
+                              {subInfo.cancel_at_period_end ? t("dash.set.subEnd") : t("dash.set.subRenew")}
                             </span>
                             <span className={`font-medium text-xs ${subInfo.cancel_at_period_end ? "text-red-400" : "text-white/80"}`}>
-                              {subInfo.current_period_end ? new Date(subInfo.current_period_end).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"}) : "—"}
+                              {subInfo.current_period_end ? new Date(subInfo.current_period_end).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"}) : "—"}
                             </span>
                           </div>
 
                           {subInfo.cancel_at_period_end ? (
                             <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
                               <p className="text-red-400 text-xs font-medium leading-relaxed">
-                                Abonnement annulé — vous conservez tous vos avantages jusqu&apos;à la fin de la période déjà payée, puis il ne sera pas renouvelé.
+                                {t("dash.set.subCancelledNote")}
                               </p>
                             </div>
                           ) : !confirmCancelSub ? (
@@ -2144,15 +2144,15 @@ function DashboardContent() {
                               onClick={() => setConfirmCancelSub(true)}
                               className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-surface-border text-white/50 hover:text-red-400 hover:border-red-500/40 transition-all text-sm font-medium"
                             >
-                              Annuler l&apos;abonnement
+                              {t("dash.set.cancelSub")}
                             </button>
                           ) : (
                             <div className="space-y-2 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3">
                               <p className="text-white/70 text-xs leading-relaxed">
-                                L&apos;annulation prend effet <strong className="text-white">à la fin de la période en cours</strong>
+                                {t("dash.set.cancelEffect1")} <strong className="text-white">{t("dash.set.cancelEffectStrong")}</strong>
                                 {subInfo.current_period_end && (
-                                  <> (le {new Date(subInfo.current_period_end).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})})</>
-                                )} — vous gardez l&apos;accès complet jusque-là, rien n&apos;est coupé immédiatement.
+                                  <> ({t("dash.set.on")} {new Date(subInfo.current_period_end).toLocaleDateString(undefined,{day:"numeric",month:"long",year:"numeric"})})</>
+                                )} {t("dash.set.cancelEffect2")}
                               </p>
                               <div className="flex items-center gap-2">
                                 <button
@@ -2160,14 +2160,14 @@ function DashboardContent() {
                                   disabled={cancellingSub}
                                   className="px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition-all disabled:opacity-50"
                                 >
-                                  {cancellingSub ? "…" : "Confirmer l'annulation"}
+                                  {cancellingSub ? "…" : t("dash.set.confirmCancel")}
                                 </button>
                                 <button
                                   onClick={() => setConfirmCancelSub(false)}
                                   disabled={cancellingSub}
                                   className="px-3 py-1.5 rounded-lg border border-surface-border text-white/50 hover:text-white text-xs transition-all"
                                 >
-                                  Garder mon abonnement
+                                  {t("dash.set.keepSub")}
                                 </button>
                               </div>
                             </div>
@@ -2175,33 +2175,33 @@ function DashboardContent() {
                         </>
                       ) : (
                         <div className="pt-1">
-                          <p className="text-white/40 text-xs mb-3">Aucun abonnement actif — débloquez la 4K, la vidéo IA et bien plus.</p>
+                          <p className="text-white/40 text-xs mb-3">{t("dash.set.noSub")}</p>
                           <button
                             onClick={goToSubscription}
                             className="btn-primary-orange w-full py-2.5 text-sm flex items-center justify-center gap-1.5"
                           >
                             <Crown className="w-4 h-4" />
-                            Découvrir les formules
+                            {t("dash.set.discoverPlans")}
                           </button>
                         </div>
                       )}
                     </div>
                     <div className="card !p-3 space-y-2">
-                      <h2 className="font-bold text-sm">Statistiques</h2>
+                      <h2 className="font-bold text-sm">{t("dash.set.stats")}</h2>
                       <div className="flex justify-between py-1.5 border-b border-surface-border">
-                        <span className="text-white/50 text-xs">Générations totales</span>
+                        <span className="text-white/50 text-xs">{t("dash.set.totalGens")}</span>
                         <span className="font-bold text-xs">{stats?.total_generations ?? generations.length}</span>
                       </div>
                       <div className="flex justify-between py-1.5 border-b border-surface-border">
-                        <span className="text-white/50 text-xs">Images générées</span>
+                        <span className="text-white/50 text-xs">{t("dash.set.imagesGen")}</span>
                         <span className="font-bold text-xs">{stats?.image_generations ?? 0}</span>
                       </div>
                       <div className="flex justify-between py-1.5 border-b border-surface-border">
-                        <span className="text-white/50 text-xs">Vidéos générées</span>
+                        <span className="text-white/50 text-xs">{t("dash.set.videosGen")}</span>
                         <span className="font-bold text-xs">{stats?.video_generations ?? 0}</span>
                       </div>
                       <div className="flex justify-between py-1.5">
-                        <span className="text-white/50 text-xs">Crédits restants</span>
+                        <span className="text-white/50 text-xs">{t("dash.set.creditsLeft")}</span>
                         <span className="font-bold text-accent-orange text-xs">{stats?.credits ?? 0}</span>
                       </div>
                     </div>
@@ -2216,7 +2216,7 @@ function DashboardContent() {
                           className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-amber-400/40 text-amber-400 hover:bg-amber-400/10 transition-all text-sm font-bold"
                         >
                           <ShieldCheck className="w-4 h-4" />
-                          Accès Admin — gérer les utilisateurs
+                          {t("dash.set.adminAccess")}
                         </Link>
 
                         {/* Script maître de génération — interne, admin uniquement */}
@@ -2225,13 +2225,13 @@ function DashboardContent() {
                             <div className="flex items-center justify-between gap-3">
                               <h2 className="font-bold flex items-center gap-2 text-amber-400">
                                 <Settings className="w-4 h-4" />
-                                Script de génération interne
+                                {t("dash.set.internalScript")}
                               </h2>
                               {/* Interrupteur ON/OFF — test avec / sans le script */}
                               <button
                                 onClick={toggleMasterScript}
                                 disabled={togglingScript}
-                                aria-label={adminScript.enabled ? "Désactiver le script" : "Activer le script"}
+                                aria-label={adminScript.enabled ? t("dash.set.disableScript") : t("dash.set.enableScript")}
                                 className={`flex items-center gap-2 flex-shrink-0 rounded-full border px-1 py-1 pr-3 transition-all disabled:opacity-50 ${
                                   adminScript.enabled
                                     ? "bg-green-500/15 border-green-500/40 text-green-400 hover:bg-green-500/25"
@@ -2250,33 +2250,29 @@ function DashboardContent() {
                                   />
                                 </span>
                                 <span className="text-[11px] font-bold uppercase tracking-wide">
-                                  {togglingScript ? "…" : adminScript.enabled ? "Activé" : "Désactivé"}
+                                  {togglingScript ? "…" : adminScript.enabled ? t("dash.set.enabled") : t("dash.set.disabled")}
                                 </span>
                               </button>
                             </div>
                             {!adminScript.enabled && (
                               <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2">
                                 <p className="text-red-400 text-[11px] font-medium leading-relaxed">
-                                  ⚠️ Script désactivé : les générations partent SANS les verrous fond /
-                                  identité / qualité (mode brut, pour comparaison). Pensez à le réactiver.
+                                  {t("dash.set.scriptOffWarn")}
                                 </p>
                               </div>
                             )}
                             <p className="text-white/40 text-xs leading-relaxed">
-                              Injecté dans chaque génération d&apos;image. Trois verrous : fond
-                              d&apos;origine conservé, reproduction totale des traits de la personne
-                              (visage, peau, cheveux, habits, accessoires), qualité maximale.
-                              Visible uniquement par ce compte.
+                              {t("dash.set.scriptDesc")}
                             </p>
                             <div>
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">Modèle</p>
+                              <p className="text-[10px] font-bold uppercase tracking-wider text-white/40 mb-1">{t("dash.set.model")}</p>
                               <p className="text-xs font-mono text-white/70 break-all bg-surface-hover border border-surface-border rounded-lg px-3 py-2">
                                 {adminScript.model}
                               </p>
                             </div>
                             <details className="group">
                               <summary className="cursor-pointer text-xs font-bold text-white/70 hover:text-white transition-colors select-none">
-                                ▸ Prompt de base ({adminScript.master_prompt.length.toLocaleString("fr-FR")} caractères)
+                                ▸ {t("dash.set.basePrompt")} ({adminScript.master_prompt.length.toLocaleString("fr-FR")} {t("dash.set.chars")})
                               </summary>
                               <pre className="mt-2 text-[11px] font-mono text-white/60 whitespace-pre-wrap leading-relaxed bg-surface-hover border border-surface-border rounded-lg px-3 py-2 max-h-72 overflow-y-auto">
                                 {adminScript.master_prompt}
@@ -2285,7 +2281,7 @@ function DashboardContent() {
                             {adminScript.gta5_style_boost && (
                               <details className="group">
                                 <summary className="cursor-pointer text-xs font-bold text-accent-orange/90 hover:text-accent-orange transition-colors select-none">
-                                  ▸ Boost style GTA 5 ({adminScript.gta5_style_boost.length.toLocaleString("fr-FR")} caractères)
+                                  ▸ {t("dash.set.styleBoost")} ({adminScript.gta5_style_boost.length.toLocaleString("fr-FR")} {t("dash.set.chars")})
                                 </summary>
                                 <pre className="mt-2 text-[11px] font-mono text-white/60 whitespace-pre-wrap leading-relaxed bg-surface-hover border border-accent-orange/20 rounded-lg px-3 py-2 max-h-72 overflow-y-auto">
                                   {adminScript.gta5_style_boost}
@@ -2294,7 +2290,7 @@ function DashboardContent() {
                             )}
                             <details className="group">
                               <summary className="cursor-pointer text-xs font-bold text-red-400/80 hover:text-red-400 transition-colors select-none">
-                                ▸ Negative prompt ({adminScript.negative_prompt.length.toLocaleString("fr-FR")} caractères)
+                                ▸ {t("dash.set.negativePrompt")} ({adminScript.negative_prompt.length.toLocaleString("fr-FR")} {t("dash.set.chars")})
                               </summary>
                               <pre className="mt-2 text-[11px] font-mono text-white/60 whitespace-pre-wrap leading-relaxed bg-surface-hover border border-red-500/20 rounded-lg px-3 py-2 max-h-72 overflow-y-auto">
                                 {adminScript.negative_prompt}
@@ -2310,30 +2306,30 @@ function DashboardContent() {
 
                     <motion.button whileHover={{scale:1.01}} whileTap={{scale:0.98}} onClick={handleLogout}
                       className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all text-sm font-medium">
-                      <LogOut className="w-4 h-4" />Se déconnecter
+                      <LogOut className="w-4 h-4" />{t("dash.set.logout")}
                     </motion.button>
 
                     {!confirmCloseAccount ? (
                       <motion.button whileHover={{scale:1.01}} whileTap={{scale:0.98}} onClick={() => setConfirmCloseAccount(true)}
                         className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-all text-sm font-medium">
-                        <Trash2 className="w-4 h-4" />Fermer le compte
+                        <Trash2 className="w-4 h-4" />{t("dash.set.closeAccount")}
                       </motion.button>
                     ) : (
                       <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-3">
-                        <p className="text-red-400 text-xs font-medium flex-1">Supprimer définitivement votre compte et toutes vos données ?</p>
+                        <p className="text-red-400 text-xs font-medium flex-1">{t("dash.set.closeConfirm")}</p>
                         <button
                           onClick={handleCloseAccount}
                           disabled={closingAccount}
                           className="px-2.5 py-1.5 rounded-lg bg-red-500 hover:bg-red-600 text-white text-xs font-bold transition-all disabled:opacity-50 flex-shrink-0"
                         >
-                          {closingAccount ? "…" : "Confirmer"}
+                          {closingAccount ? "…" : t("dash.hist.confirm")}
                         </button>
                         <button
                           onClick={() => setConfirmCloseAccount(false)}
                           disabled={closingAccount}
                           className="px-2.5 py-1.5 rounded-lg border border-surface-border text-white/50 hover:text-white text-xs transition-all flex-shrink-0"
                         >
-                          Annuler
+                          {t("dash.hist.cancel")}
                         </button>
                       </div>
                     )}
@@ -2376,7 +2372,7 @@ function DashboardContent() {
               {/* Header */}
               <div className="px-6 py-4 border-b border-surface-border flex items-center justify-between">
                 <h3 className="font-bold text-xl">
-                  {isGenerating ? "Génération en cours…" : "Résultat"}
+                  {isGenerating ? t("dash.gen.inProgress") : t("dash.result.title")}
                 </h3>
                 {resultUrl && !isGenerating && (
                   <button
@@ -2390,26 +2386,26 @@ function DashboardContent() {
               {resultUrl && !isGenerating ? (
                 <div>
                   <div className="relative bg-surface-hover overflow-hidden" style={{ height: "60vh" }}>
-                    <Image src={resultUrl} alt={resultStyle || "Résultat"} fill className={`object-contain ${isPaid ? "" : "blur-2xl scale-110"}`} />
+                    <Image src={resultUrl} alt={resultStyle || t("dash.result.title")} fill className={`object-contain ${isPaid ? "" : "blur-2xl scale-110"}`} />
                     {!isPaid && <LockedOverlay onUnlock={goToSubscription} />}
                   </div>
                   <div className="p-6 flex items-center gap-4">
                     <p className="text-white/50 text-sm flex-1 truncate">
-                      {isPaid ? resultStyle : "Aperçu flouté — débloquez la HD avec une formule"}
+                      {isPaid ? resultStyle : t("dash.result.blurredHint")}
                     </p>
                     {isPaid ? (
                       <button
                         onClick={() => handleDownload(resultUrl, Date.now().toString())}
                         className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-orange hover:bg-accent-orange/80 text-white font-semibold transition-all text-sm whitespace-nowrap"
                       >
-                        <Download className="w-4 h-4" />Télécharger
+                        <Download className="w-4 h-4" />{t("dash.result.download")}
                       </button>
                     ) : (
                       <button
                         onClick={goToSubscription}
                         className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-orange hover:bg-accent-orange/80 text-white font-semibold transition-all text-sm whitespace-nowrap"
                       >
-                        <Crown className="w-4 h-4" />Débloquer en HD
+                        <Crown className="w-4 h-4" />{t("dash.result.unlockHd")}
                       </button>
                     )}
                   </div>
@@ -2428,8 +2424,8 @@ function DashboardContent() {
                     </div>
                   </div>
                   <div className="text-center space-y-1.5">
-                    <p className="text-white/85 text-2xl font-black">Génération IA</p>
-                    <p className="text-white/40 text-sm">Votre image est en cours de création…</p>
+                    <p className="text-white/85 text-2xl font-black">{t("dash.result.aiGen")}</p>
+                    <p className="text-white/40 text-sm">{t("dash.result.creating")}</p>
                   </div>
                   <div className="w-80 space-y-2">
                     <div className="h-2.5 bg-surface-hover rounded-full overflow-hidden">
@@ -2448,7 +2444,7 @@ function DashboardContent() {
                     className="flex items-center gap-2 px-6 py-3 rounded-xl border border-red-500/40 text-red-400 hover:bg-red-500/10 font-semibold transition-all"
                   >
                     <StopCircle className="w-4 h-4" />
-                    Arrêter la génération
+                    {t("dash.gen.stop")}
                   </motion.button>
                 </div>
               )}
@@ -2457,7 +2453,7 @@ function DashboardContent() {
         )}
       </AnimatePresence>
 
-      <PaywallModal isOpen={showPaywall} onClose={()=>setShowPaywall(false)} reason="Crédits épuisés — Rechargez pour continuer" />
+      <PaywallModal isOpen={showPaywall} onClose={()=>setShowPaywall(false)} reason={t("dash.result.creditsEmpty")} />
       <TrustNotification />
       <AnimatePresence>
         {showAuthGate && <AuthGateModal onClose={() => setShowAuthGate(false)} />}
@@ -2468,6 +2464,7 @@ function DashboardContent() {
 
 /* ─── Auth gate modal (mode aperçu) ──────────────────────── */
 function AuthGateModal({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
@@ -2484,13 +2481,13 @@ function AuthGateModal({ onClose }: { onClose: () => void }) {
         <div className="w-14 h-14 rounded-2xl bg-accent-orange/15 border border-accent-orange/30 flex items-center justify-center mx-auto mb-4">
           <Lock className="w-7 h-7 text-accent-orange" />
         </div>
-        <h3 className="font-black text-xl mb-2">Créez un compte pour générer</h3>
+        <h3 className="font-black text-xl mb-2">{t("dash.gate.title")}</h3>
         <p className="text-white/45 text-sm mb-2 leading-relaxed">
-          Vous êtes en mode aperçu. Inscrivez-vous gratuitement pour lancer votre première génération.
+          {t("dash.gate.subtitle")}
         </p>
         <div className="inline-flex items-center gap-1.5 bg-green-500/10 border border-green-500/30 text-green-400 text-xs font-bold px-3 py-1.5 rounded-full mb-6">
           <Zap className="w-3.5 h-3.5" />
-          100 crédits offerts = 1 image gratuite
+          {t("register.freeCredits")}
         </div>
 
         <Link
@@ -2498,14 +2495,14 @@ function AuthGateModal({ onClose }: { onClose: () => void }) {
           className="btn-primary-orange w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold mb-2"
         >
           <UserPlus className="w-4 h-4" />
-          Créer mon compte gratuit
+          {t("register.submit")}
         </Link>
         <Link
           href="/login"
           className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border border-accent-orange/40 text-accent-orange hover:bg-accent-orange/10 text-sm font-bold transition-all"
         >
           <LogIn className="w-4 h-4" />
-          J&apos;ai déjà un compte
+          {t("dash.gate.haveAccount")}
         </Link>
       </motion.div>
     </div>
