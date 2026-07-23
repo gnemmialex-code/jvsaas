@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCommunityAccess } from "@/lib/community";
 import { uploadToStorage } from "@/lib/storage";
+import { generateVirtualMessages, type VirtualMessage } from "@/lib/community-bots";
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 Mo
 const TEXT_SIZES = ["small", "normal", "large", "title"] as const;
@@ -9,10 +10,17 @@ const TEXT_SIZES = ["small", "normal", "large", "title"] as const;
 export async function GET(req: NextRequest) {
   const gate = await getCommunityAccess();
   if (!gate.ok) return NextResponse.json({ error: gate.error }, { status: gate.status });
-  const { admin } = gate.access;
+  const { admin, user } = gate.access;
 
   const topicId = req.nextUrl.searchParams.get("topic_id");
   if (!topicId) return NextResponse.json({ error: "topic_id requis" }, { status: 400 });
+
+  // Titre + type de la discussion (pour l'animation automatique des espaces par défaut)
+  const { data: topic } = await admin
+    .from("community_topics")
+    .select("title, is_default")
+    .eq("id", topicId)
+    .single();
 
   const { data, error } = await admin
     .from("community_messages")
@@ -22,7 +30,45 @@ export async function GET(req: NextRequest) {
     .limit(500);
 
   if (error) return NextResponse.json({ error: "Impossible de charger les messages" }, { status: 500 });
-  return NextResponse.json({ messages: data ?? [] });
+
+  // Messages réels (base) → on complète avec les champs d'action (absents en base)
+  const real: VirtualMessage[] = (data ?? []).map((m) => ({
+    ...m,
+    text_size: (m.text_size ?? "normal") as VirtualMessage["text_size"],
+    action: null,
+    action_key: null,
+    action_amount: null,
+    action_claimed: false,
+  }));
+
+  // Messages fictifs générés à la volée pour les espaces par défaut
+  const virtual = topic
+    ? generateVirtualMessages(topicId, topic.title as string, !!topic.is_default)
+    : [];
+
+  // Marque les cadeaux crédits déjà récupérés par ce membre (bouton désactivé)
+  const giftKeys = virtual
+    .filter((m) => m.action === "claim_credits" && m.action_key)
+    .map((m) => m.action_key as string);
+  if (giftKeys.length) {
+    const { data: claims } = await admin
+      .from("community_credit_claims")
+      .select("claim_key")
+      .eq("user_id", user.id)
+      .in("claim_key", giftKeys);
+    const claimed = new Set((claims ?? []).map((c) => c.claim_key as string));
+    for (const m of virtual) {
+      if (m.action_key && claimed.has(m.action_key)) m.action_claimed = true;
+    }
+  }
+
+  const merged = [...virtual, ...real].sort(
+    (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+  );
+  // On garde les 500 derniers (les plus récents) en ordre chronologique
+  const messages = merged.slice(-500);
+
+  return NextResponse.json({ messages });
 }
 
 // POST /api/community/messages — FormData { topic_id, content?, text_size?, image? }

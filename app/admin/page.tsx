@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Zap, Crown, Search, X, Check,
   ChevronUp, ChevronDown, Ban, PlusCircle,
-  Settings, LogOut, Trash2,
+  Settings, LogOut, Trash2, Download, Mail, Copy,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useI18n } from "@/lib/i18n";
@@ -49,6 +49,10 @@ export default function AdminPage() {
   const [editNotes, setEditNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+
+  // Export des adresses e-mail (par formule / abonnement)
+  const ALL_PLANS: Plan[] = ["free", "essentiel", "pro", "ultra"];
+  const [exportPlans, setExportPlans] = useState<Set<Plan>>(new Set(ALL_PLANS));
 
   useEffect(() => { fetchUsers(); }, []);
 
@@ -135,6 +139,59 @@ export default function AdminPage() {
   const totalCredits = users.reduce((s, u) => s + (u.credits ?? 0), 0);
   const proUsers = users.filter(u => u.plan === "pro" || u.plan === "ultra").length;
 
+  /* ── Export des adresses e-mail ─────────────────────────── */
+  const togglePlanFilter = (p: Plan) => {
+    setExportPlans(prev => {
+      const next = new Set(prev);
+      if (next.has(p)) next.delete(p); else next.add(p);
+      return next;
+    });
+  };
+
+  // E-mails correspondant aux formules sélectionnées (dédupliqués)
+  const exportEmails = (plans: Set<Plan> | "all"): string[] => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const u of users) {
+      if (!u.email) continue;
+      const plan = (u.plan as Plan) ?? "free";
+      if (plans !== "all" && !plans.has(plan)) continue;
+      const email = u.email.trim().toLowerCase();
+      if (seen.has(email)) continue;
+      seen.add(email);
+      out.push(u.email.trim());
+    }
+    return out;
+  };
+
+  const downloadEmails = (plans: Set<Plan> | "all", filename: string) => {
+    const emails = exportEmails(plans);
+    if (emails.length === 0) { toast.error(t("admin.export.none")); return; }
+    const blob = new Blob([emails.join("\n") + "\n"], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success(`${emails.length} ${t("admin.export.done")}`);
+  };
+
+  const copyEmails = async (plans: Set<Plan> | "all") => {
+    const emails = exportEmails(plans);
+    if (emails.length === 0) { toast.error(t("admin.export.none")); return; }
+    try {
+      await navigator.clipboard.writeText(emails.join(", "));
+      toast.success(`${emails.length} ${t("admin.export.copied")}`);
+    } catch {
+      toast.error(t("admin.saveError"));
+    }
+  };
+
+  const selectedCount = exportEmails(exportPlans).length;
+
   return (
     <div className="min-h-screen text-white">
       {/* Header */}
@@ -168,6 +225,77 @@ export default function AdminPage() {
               <div className="text-white/40 text-sm">{stat.label}</div>
             </div>
           ))}
+        </div>
+
+        {/* Export des adresses e-mail */}
+        <div className="card border-surface-border mb-8">
+          <div className="flex items-center gap-2 mb-1">
+            <Mail className="w-5 h-5 text-accent-violet" />
+            <h2 className="font-bold text-lg">{t("admin.export.title")}</h2>
+          </div>
+          <p className="text-white/40 text-sm mb-5">{t("admin.export.subtitle")}</p>
+
+          {/* Tout exporter */}
+          <div className="flex flex-wrap items-center gap-2 mb-5 pb-5 border-b border-surface-border">
+            <button
+              onClick={() => downloadEmails("all", "emails-tous.csv")}
+              className="btn-primary text-sm px-4 py-2 flex items-center gap-2"
+            >
+              <Download className="w-4 h-4" /> {t("admin.export.all")}
+            </button>
+            <button
+              onClick={() => copyEmails("all")}
+              className="btn-secondary text-sm px-4 py-2 flex items-center gap-2"
+            >
+              <Copy className="w-4 h-4" /> {t("admin.export.copyAll")}
+            </button>
+            <span className="text-white/30 text-xs ml-auto">
+              {users.length} {t("admin.export.total")}
+            </span>
+          </div>
+
+          {/* Par formule / abonnement */}
+          <p className="text-sm font-medium text-white/70 mb-3">{t("admin.export.byPlan")}</p>
+          <div className="flex flex-wrap gap-2 mb-4">
+            {ALL_PLANS.map(p => {
+              const active = exportPlans.has(p);
+              const count = users.filter(u => ((u.plan as Plan) ?? "free") === p).length;
+              return (
+                <button
+                  key={p}
+                  onClick={() => togglePlanFilter(p)}
+                  className={`px-3 py-1.5 rounded-lg text-sm border transition-all flex items-center gap-1.5 ${
+                    active
+                      ? "bg-accent-violet border-accent-violet text-white"
+                      : "border-surface-border text-white/50 hover:text-white"
+                  }`}
+                >
+                  {active && <Check className="w-3.5 h-3.5" />}
+                  {PLAN_LABELS[p]}
+                  <span className={active ? "text-white/70" : "text-white/30"}>({count})</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => downloadEmails(exportPlans, `emails-${Array.from(exportPlans).join("-") || "aucun"}.csv`)}
+              disabled={exportPlans.size === 0}
+              className="btn-primary text-sm px-4 py-2 flex items-center gap-2 disabled:opacity-40"
+            >
+              <Download className="w-4 h-4" /> {t("admin.export.selection")}
+            </button>
+            <button
+              onClick={() => copyEmails(exportPlans)}
+              disabled={exportPlans.size === 0}
+              className="btn-secondary text-sm px-4 py-2 flex items-center gap-2 disabled:opacity-40"
+            >
+              <Copy className="w-4 h-4" /> {t("admin.export.copySelection")}
+            </button>
+            <span className="text-white/30 text-xs ml-auto">
+              {selectedCount} {t("admin.export.selected")}
+            </span>
+          </div>
         </div>
 
         {/* Tableau */}

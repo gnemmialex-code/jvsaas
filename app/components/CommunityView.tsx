@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import {
   Crown, Lock, Loader2, MessageCircle, Megaphone, Gift, Plus,
-  Send, ImagePlus, X, Users, ShieldCheck,
+  Send, ImagePlus, X, Users, ShieldCheck, Zap, Check,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useI18n } from "@/lib/i18n";
@@ -30,21 +30,20 @@ interface Message {
   image_url: string | null;
   text_size: "small" | "normal" | "large" | "title";
   created_at: string;
+  /* Bouton d'action facultatif (cadeau crédits) — présent sur les messages générés */
+  action?: "claim_credits" | null;
+  action_key?: string | null;
+  action_amount?: number | null;
+  action_claimed?: boolean;
 }
 
-/* Tailles de texte (réservées à l'admin à l'écriture) */
+/* Tailles de texte */
 const SIZE_CLASSES: Record<Message["text_size"], string> = {
   small:  "text-xs",
   normal: "text-sm",
   large:  "text-lg font-semibold",
   title:  "text-2xl font-black",
 };
-const SIZE_OPTIONS: { id: Message["text_size"]; label: string }[] = [
-  { id: "small",  label: "small"  },
-  { id: "normal", label: "Normal" },
-  { id: "large",  label: "large"  },
-  { id: "title",  label: "title"  },
-];
 
 /* Icône des 3 discussions par défaut */
 function topicIcon(topic: Topic) {
@@ -121,8 +120,11 @@ export default function CommunityView({
   const [content, setContent] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [textSize, setTextSize] = useState<Message["text_size"]>("normal");
   const [sending, setSending] = useState(false);
+
+  /* cadeaux crédits */
+  const [claimingKey, setClaimingKey] = useState<string | null>(null);
+  const [claimedKeys, setClaimedKeys] = useState<Set<string>>(new Set());
 
   const listRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -235,7 +237,6 @@ export default function CommunityView({
       const form = new FormData();
       form.append("topic_id", selectedId);
       form.append("content", content.trim());
-      form.append("text_size", textSize);
       if (imageFile) form.append("image", imageFile);
       const res = await fetch("/api/community/messages", { method: "POST", body: form });
       const d = await res.json();
@@ -247,6 +248,35 @@ export default function CommunityView({
       toast.error(t("login.errorGeneric"));
     } finally {
       setSending(false);
+    }
+  };
+
+  /* Réclame un cadeau « 200 crédits » (bouton dans l'espace Cadeau) */
+  const handleClaim = async (key: string, amount: number) => {
+    if (claimingKey) return;
+    if (isAuthed !== true) { toast.error("Connectez-vous pour récupérer vos crédits"); return; }
+    setClaimingKey(key);
+    try {
+      const res = await fetch("/api/community/claim", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key }),
+      });
+      const d = await res.json();
+      if (!res.ok) {
+        // Déjà réclamé → on grise quand même le bouton
+        if (res.status === 409) setClaimedKeys((prev) => new Set(prev).add(key));
+        toast.error(d.error ?? t("login.errorGeneric"));
+        return;
+      }
+      setClaimedKeys((prev) => new Set(prev).add(key));
+      toast.success(`🎉 +${d.amount ?? amount} crédits ajoutés à votre compte !`);
+      // Rafraîchit le compteur de crédits affiché ailleurs dans l'app
+      window.dispatchEvent(new CustomEvent("credits-refresh"));
+    } catch {
+      toast.error(t("login.errorGeneric"));
+    } finally {
+      setClaimingKey(null);
     }
   };
 
@@ -419,10 +449,36 @@ export default function CommunityView({
                             </span>
                           </p>
                           {msg.content && (
-                            <p className={`text-white/85 whitespace-pre-wrap break-words leading-relaxed ${SIZE_CLASSES[msg.text_size] ?? "text-sm"}`}>
+                            <p className={`text-white/85 whitespace-pre-wrap break-words leading-relaxed ${
+                              /* Les 3 espaces par défaut s'affichent en petit */
+                              selectedTopic.is_default ? SIZE_CLASSES.small : (SIZE_CLASSES[msg.text_size] ?? "text-sm")
+                            }`}>
                               {msg.content}
                             </p>
                           )}
+                          {msg.action === "claim_credits" && msg.action_key && (() => {
+                            const done = msg.action_claimed || claimedKeys.has(msg.action_key);
+                            const busy = claimingKey === msg.action_key;
+                            return (
+                              <button
+                                onClick={() => !done && handleClaim(msg.action_key!, msg.action_amount ?? 200)}
+                                disabled={done || busy}
+                                className={`mt-3 w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-black transition-all ${
+                                  done
+                                    ? "bg-green-500/15 border border-green-500/40 text-green-400 cursor-default"
+                                    : "btn-primary-orange hover:scale-[1.02]"
+                                }`}
+                              >
+                                {busy ? (
+                                  <><Loader2 className="w-4 h-4 animate-spin" /> Récupération…</>
+                                ) : done ? (
+                                  <><Check className="w-4 h-4" /> Crédits récupérés</>
+                                ) : (
+                                  <><Zap className="w-4 h-4" /> Récupérer {msg.action_amount ?? 200} crédits</>
+                                )}
+                              </button>
+                            );
+                          })()}
                           {msg.image_url && (
                             <div className="relative mt-2 rounded-xl overflow-hidden border border-white/10" style={{ maxWidth: 360 }}>
                               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -451,24 +507,6 @@ export default function CommunityView({
                         >
                           <X className="w-3 h-3" />
                         </button>
-                      </div>
-                    )}
-                    {isAdmin && selectedTopic.admin_only && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-white/35 text-[10px] uppercase tracking-wide font-bold mr-1">{t("comm.size")}</span>
-                        {SIZE_OPTIONS.map((s) => (
-                          <button
-                            key={s.id}
-                            onClick={() => setTextSize(s.id)}
-                            className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-all ${
-                              textSize === s.id
-                                ? "border-amber-400 bg-amber-400/15 text-amber-400"
-                                : "border-surface-border text-white/40 hover:text-white"
-                            }`}
-                          >
-                            {t(`comm.size.${s.id}`)}
-                          </button>
-                        ))}
                       </div>
                     )}
                     <div className="flex items-end gap-2">

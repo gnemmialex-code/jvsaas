@@ -12,6 +12,10 @@ export default function CreditCounter() {
 
   useEffect(() => {
     fetchCredits();
+    // Rafraîchit le solde quand un cadeau de crédits est récupéré (Communauté)
+    const onRefresh = () => fetchCredits();
+    window.addEventListener("credits-refresh", onRefresh);
+    return () => window.removeEventListener("credits-refresh", onRefresh);
   }, []);
 
   const fetchCredits = async () => {
